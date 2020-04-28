@@ -1,0 +1,81 @@
+stages:
+- package
+- release
+- stage
+- deploy
+.package-common: &package-common
+  image: $BASE_REGISTRY/maven:0.0.3
+  stage: package
+  script:
+  - echo "<<<<<package>>>>>"
+  - mvn clean install -Dmaven.test.skip=true
+  artifacts:
+    paths:
+    - ladeit-biz/target/ladeit.jar
+.release-common: &release-common
+  image: docker:stable-dind
+  stage: release
+  script:
+  - echo "<<<<<release>>>>>"
+  - cp ladeit-biz/target/ladeit.jar .
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $BASE_REGISTRY
+  - docker build -t $BASE_REGISTRY/ladeit:$CI_PIPELINE_ID .
+  - docker push $BASE_REGISTRY/ladeit:$CI_PIPELINE_ID
+.deploy-common: &deploy-common
+  image: $BASE_REGISTRY/helm:1.0.2
+  stage: deploy
+  script:
+  - echo "<<<<<deploy>>>>>"
+  - '[[ $CI_ENVIRONMENT_NAME == "dev" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"5OibZDibznzQyJyZqBNurCvwQ7y9ibSSj5MTiaQLBcGS3g4\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
+  - '[[ $CI_ENVIRONMENT_NAME == "prod" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"GLLUltb2L4q94QG4e1MJKKk2MslfTEZ74jX4pRcFJts\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
+.env-dev: &environment-dev
+  only:
+    refs:
+    - master
+  environment:
+    name: dev
+.env-test: &environment-test
+  only:
+    refs:
+    - /^release.*$/
+  environment:
+    name: test
+.env-prod: &environment-prod
+  only:
+    refs:
+    - tags
+  environment:
+    name: prod
+package-provider-dev:
+  <<: *environment-dev
+  <<: *package-common
+release-provider-dev:
+  dependencies:
+  - package-provider-dev
+  <<: *environment-dev
+  <<: *release-common
+deploy-provider-dev:
+  <<: *environment-dev
+  <<: *deploy-common
+package-provider-test:
+  <<: *environment-test
+  <<: *package-common
+release-provider-test:
+  dependencies:
+  - package-provider-test
+  <<: *environment-test
+  <<: *release-common
+deploy-provider-test:
+  <<: *environment-test
+  <<: *deploy-common
+package-provider-prod:
+  <<: *environment-prod
+  <<: *package-common
+release-provider-prod:
+  dependencies:
+  - package-provider-prod
+  <<: *environment-prod
+  <<: *release-common
+deploy-provider-prod:
+  <<: *environment-prod
+  <<: *deploy-common

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ladeit-parent</artifactId>
+        <groupId>com.ladeit</groupId>
+        <version>0.1.3-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>ladeit-util</artifactId>
+    <name>ladeit-util</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ladeit</groupId>
+            <artifactId>ladeit-pojo</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ladeit</groupId>
+            <artifactId>ladeit-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>5.1.8.RELEASE</version>
+        </dependency>
+        <!-- jwt -->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+        </dependency>
+        <!-- jwt -->
+        <!-- base64 -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <!-- base64 -->
+        <!-- redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <!-- redis -->
+        <!-- istio -->
+        <dependency>
+            <groupId>me.snowdrop</groupId>
+            <artifactId>istio-java-api</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>me.snowdrop</groupId>
+            <artifactId>istio-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.snowdrop</groupId>
+            <artifactId>istio-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.snowdrop</groupId>
+            <artifactId>istio-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.snowdrop</groupId>
+            <artifactId>istio-model-annotator</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

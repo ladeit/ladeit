@@ -1,0 +1,58 @@
+server:
+  port: 8000
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: ladeit
+  redis:
+    timeout: 604800000
+    exprie: 604800
+    jedis:
+      pool:
+        max-idle: 10
+        max-wait: -1
+        max-active: 20
+        min-idle: 5
+management:
+  server:
+    port: 8000
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+datasource:
+  default:
+    minIdle: 5
+    validationQuery: SELECT 1
+    initialSize: 3
+    maxWait: 60000
+    filters: stat,wall
+    logSlowSql: true
+    type: com.alibaba.druid.pool.DruidDataSource
+    testWhileIdle: true
+    testOnBorrow: false
+    minEvictableIdleTimeMillis: 300000
+    timeBetweenEvictionRunsMillis: 60000
+    testOnReturn: false
+    maxActive: 20
+ebean:
+  search:
+    packages: com.ladeit.pojo
+  dumpMetricsOnShutdown: true
+  dumpMetricsOptions: loc,sql,hash
+#logging:
+#  level:
+#    io:
+#      ebean:
+#        SQL: TRACE
+#        TXN: TRACE
+api:
+  version: v1
+  retryTimes: 3
+  retryCycle: 3000
+filter:
+  url-notoken: /api/${api.version}/projects/gitlab/build,/api/${api.version}/application/url,/api/${api.version}/auth/url,/api/${api.version}/auth/root,/api/${api.version}/members/info,/api/${api.version}/members/oauth,/api/${api.version}/users/login,/api/${api.version}/endpoint,/api/${api.version}/members/reg
+  url-socket: /api/${api.version}/terminal/socket
+
+
