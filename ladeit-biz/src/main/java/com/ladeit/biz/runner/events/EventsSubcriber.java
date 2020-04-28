@@ -8,6 +8,7 @@ import com.ladeit.biz.dao.ReleaseDao;
 import com.ladeit.biz.manager.IstioManager;
 import com.ladeit.biz.services.*;
 import com.ladeit.biz.utils.CommonConsant;
+import com.ladeit.biz.websocket.events.EventSub;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.common.system.Code;
 import com.ladeit.pojo.ao.TopologyAO;
@@ -29,6 +30,7 @@ import io.kubernetes.client.util.Watch;
 import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.networking.v1alpha3.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +133,8 @@ public class EventsSubcriber {
 	 */
 	public void watch() {
 		ThreadFactory threadPoolFactory = (ThreadFactory) SpringBean.getBean("threadPoolFactory");
+		ResourceService resourceService = SpringBean.getObject(ResourceService.class);
+		ServiceService serviceService = SpringBean.getObject(ServiceService.class);
 		threadPoolFactory.newThread(() -> {
 			String currentRev = null;
 			Event event = new Event();
@@ -149,32 +153,66 @@ public class EventsSubcriber {
 						V1Event v1event = item.object;
 						if (!"Expired".equals(v1event.getReason())) {
 							currentRev = v1event.getMetadata().getResourceVersion();
-							log.info("verison" + currentRev + ",kind:" + v1event.getInvolvedObject().getKind() + "," +
-									"namespace:" + v1event.getInvolvedObject().getNamespace() + ",name" + v1event.getInvolvedObject().getName() + ", reason:" + v1event.getReason() + ",message" + v1event.getMessage());
-							long time = System.currentTimeMillis();
-							event.setClusterId(cluster.getId());
-							event.setEnvId(envId);
-							event.setEventUid(v1event.getMetadata().getUid());
-							event.setResourceUid(v1event.getInvolvedObject().getUid());
-							event.setKind(v1event.getInvolvedObject().getKind());
-							event.setName(v1event.getInvolvedObject().getName());
-							event.setNamespace(v1event.getMetadata().getNamespace());
-							event.setMessage(v1event.getMessage());
-							event.setNote(v1event.getMessage());
-							event.setReason(v1event.getReason());
-							event.setType(v1event.getType());
-							event.setStartTime(v1event.getFirstTimestamp().toDate());
-							event.setEndTime(v1event.getLastTimestamp().toDate());
-							redisTemplate.boundZSetOps("head:" + envId).add(event, time);
-							redisTemplate.boundZSetOps("head:" + envId).expire(30, TimeUnit.MINUTES);
-							redisTemplate.boundZSetOps("notice:" + envId).add(event, time);
-							redisTemplate.boundZSetOps("notice:" + envId).expire(30, TimeUnit.MINUTES);
-							redisTemplate.boundZSetOps("service:" + envId).add(event, time);
-							redisTemplate.boundZSetOps("service:" + envId).expire(30, TimeUnit.MINUTES);
-							redisTemplate.boundZSetOps("lifecycle:" + envId).add(event, time);
-							redisTemplate.boundZSetOps("lifecycle:" + envId).expire(30, TimeUnit.MINUTES);
+							String kind = v1event.getInvolvedObject().getKind();
+							String uid = v1event.getInvolvedObject().getUid();
 							try {
-								this.releaseLifecycleMonitor(v1event);
+								ExecuteResult<JSONObject> result = resourceService.getResourceByUid(config,
+										v1event.getInvolvedObject().getUid(), v1event.getInvolvedObject().getKind());
+								switch (result.getCode()) {
+									case Code.SUCCESS:
+										JSONObject jo = result.getResult().getJSONObject("metadata").getJSONObject(
+												"labels");
+										if (jo != null) {
+											String serviceId = jo.getString("serviceId");
+											ExecuteResult<Service> s = serviceService.getById(serviceId);
+											if (s.getResult() == null) {
+												continue;
+											}
+											log.info("verison" + currentRev + ",kind:" + v1event.getInvolvedObject().getKind() + "," + "namespace:" + v1event.getInvolvedObject().getNamespace() + ",name" + v1event.getInvolvedObject().getName() + ", reason:" + v1event.getReason() + ",message" + v1event.getMessage());
+											long time = System.currentTimeMillis();
+											event.setClusterId(cluster.getId());
+											event.setEnvId(envId);
+											event.setEventUid(v1event.getMetadata().getUid());
+											event.setResourceUid(v1event.getInvolvedObject().getUid());
+											event.setKind(v1event.getInvolvedObject().getKind());
+											event.setName(v1event.getInvolvedObject().getName());
+											event.setNamespace(v1event.getMetadata().getNamespace());
+											event.setMessage(v1event.getMessage());
+											event.setNote(v1event.getMessage());
+											event.setReason(v1event.getReason());
+											event.setType(v1event.getType());
+											event.setStartTime(v1event.getFirstTimestamp().toDate());
+											event.setEndTime(v1event.getLastTimestamp().toDate());
+											redisTemplate.boundZSetOps("head:" + envId).add(event, time);
+											redisTemplate.boundZSetOps("head:" + envId).expire(30, TimeUnit.MINUTES);
+											redisTemplate.boundZSetOps("notice:" + envId).add(event, time);
+											redisTemplate.boundZSetOps("notice:" + envId).expire(30, TimeUnit.MINUTES);
+											redisTemplate.boundZSetOps("service:" + envId).add(event, time);
+											redisTemplate.boundZSetOps("service:" + envId).expire(30,
+													TimeUnit.MINUTES);
+											redisTemplate.boundZSetOps("lifecycle:" + envId).add(event, time);
+											redisTemplate.boundZSetOps("lifecycle:" + envId).expire(30,
+													TimeUnit.MINUTES);
+											EventSub eventSub = new EventSub();
+											BeanUtils.copyProperties(event, eventSub);
+											eventSub.setServiceId(serviceId);
+											eventSub.setStatus(Integer.parseInt(s.getResult().getStatus()));
+											redisTemplate.convertAndSend("event:topic:" + serviceId, eventSub);
+											try {
+												this.releaseLifecycleMonitor(v1event, serviceId, s.getResult());
+											} catch (Exception e) {
+												continue;
+											}
+										} else {
+											log.error("该资源没有serviceId的lables，可能不受ladeit管控");
+										}
+										break;
+									case Code.NOTFOUND:
+										log.error(kind + ":" + uid + "未找到");
+										break;
+									default:
+										log.info(kind + ":" + uid + "出现异常");
+								}
 							} catch (Exception e) {
 								continue;
 							}
@@ -188,7 +226,7 @@ public class EventsSubcriber {
 						if (StringUtils.isNotBlank(currentRev)) {
 							this.eventHandler.error(envId, currentRev);
 						} else {
-							this.eventHandler.error(envId, null);
+							this.eventHandler.error(envId, this.rev);
 						}
 					}
 				} catch (IOException e1) {
@@ -215,7 +253,7 @@ public class EventsSubcriber {
 	 * @date 20-4-3
 	 * @version 1.0.0
 	 */
-	private void releaseLifecycleMonitor(V1Event event) throws ApiException, IOException {
+	private void releaseLifecycleMonitor(V1Event event, String serviceId, Service s) throws ApiException, IOException {
 		// warning类型的视作服务存在问题，同步更新service状态
 		ResourceService resourceService = SpringBean.getObject(ResourceService.class);
 		if ("Warning".equals(event.getType())) {
@@ -231,7 +269,7 @@ public class EventsSubcriber {
 			if ("spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
 			} else if (status.getInteger("replicas") != null && !status.getInteger("replicas").equals(status.getInteger("readyReplicas"))) {
-				this.warningBussiness(uid, kind, event);
+				this.warningBussiness(uid, kind, event, serviceId, s);
 			} else {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
@@ -248,48 +286,26 @@ public class EventsSubcriber {
 	}
 
 	@Transactional
-	public void warningBussiness(String uid, String kind, V1Event event) throws IOException {
-		ResourceService resourceService = SpringBean.getObject(ResourceService.class);
-		ServiceService serviceService = SpringBean.getObject(ServiceService.class);
+	public void warningBussiness(String uid, String kind, V1Event event, String serviceId, Service s) throws IOException {
+
 		ServiceGroupService serviceGroupService = SpringBean.getObject(ServiceGroupService.class);
 		MessageService messageService = SpringBean.getObject(MessageService.class);
-		ExecuteResult<JSONObject> result = resourceService.getResourceByUid(config, uid, kind);
-		switch (result.getCode()) {
-			case Code.SUCCESS:
-				JSONObject jo = result.getResult().getJSONObject("metadata").getJSONObject("labels");
-				if (jo != null) {
-					String serviceId = jo.getString("serviceId");
-					// 如果service已经被删除了，这里就不用再执行逻辑了
-					ExecuteResult<Service> s = serviceService.getById(serviceId);
-					if (s.getResult() == null) {
-						return;
-					}
-					ExecuteResult<ServiceGroup> sg =
-							serviceGroupService.getGroupById(s.getResult().getServiceGroupId());
-					// warning类型的数据送一份进message表
-					this.message.setId(UUID.randomUUID().toString());
-					this.message.setCreateAt(new Date());
-					this.message.setContent(event.getMessage());
-					this.message.setLevel("WARNING");
-					this.message.setServiceGroupId(s.getResult().getServiceGroupId());
-					this.message.setServiceId(s.getResult().getId());
-					this.message.setTargetId(s.getResult().getId());
-					this.message.setTitle(sg.getResult().getName() + "/" + s.getResult().getName() + " " + event.getReason());
-					this.message.setType(CommonConsant.MESSAGE_TYPE_11);
-					this.message.setMessageType(CommonConsant.MESSAGE_TYPE_S);
-					messageService.insertMessage(message, false);
-					messageService.insertSlackMessage(message);
-					this.updateService(serviceId, "8");
-				} else {
-					log.error("该资源没有serviceId的lables，可能不受ladeit管控");
-				}
-				break;
-			case Code.NOTFOUND:
-				log.error(kind + ":" + uid + "未找到");
-				break;
-			default:
-				log.info(kind + ":" + uid + "出现异常");
-		}
-
+		// 如果service已经被删除了，这里就不用再执行逻辑了
+		ExecuteResult<ServiceGroup> sg =
+				serviceGroupService.getGroupById(s.getServiceGroupId());
+		// warning类型的数据送一份进message表
+		this.message.setId(UUID.randomUUID().toString());
+		this.message.setCreateAt(new Date());
+		this.message.setContent(event.getMessage());
+		this.message.setLevel("WARNING");
+		this.message.setServiceGroupId(s.getServiceGroupId());
+		this.message.setServiceId(s.getId());
+		this.message.setTargetId(s.getId());
+		this.message.setTitle(sg.getResult().getName() + "/" + s.getName() + " " + event.getReason());
+		this.message.setType(CommonConsant.MESSAGE_TYPE_11);
+		this.message.setMessageType(CommonConsant.MESSAGE_TYPE_S);
+		messageService.insertMessage(message, false);
+		messageService.insertSlackMessage(message);
+		this.updateService(serviceId, "8");
 	}
 }

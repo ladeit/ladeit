@@ -1,9 +1,14 @@
 package com.ladeit.biz.config;
 
+import com.ladeit.biz.websocket.events.RedisReceiver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -11,8 +16,13 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.Arrays;
+
 @Configuration
 public class RedisConfig {
+
+	@Autowired
+	private RedisReceiver redisReceiver;
 
 	@Bean
 	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
@@ -59,4 +69,16 @@ public class RedisConfig {
 		template.afterPropertiesSet();
 		return template;
 	}
+
+	@Bean
+	public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
+		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+		container.setConnectionFactory(connectionFactory);
+		container.addMessageListener(
+				new MessageListenerAdapter(
+						redisReceiver, "receiveMessage"),new PatternTopic("event:topic:*"));
+		return container;
+	}
+
+
 }
