@@ -196,6 +196,8 @@ public class EventsSubcriber {
 
 											EventSub eventSub = new EventSub();
 											BeanUtils.copyProperties(event, eventSub);
+											eventSub.setResourceName(eventSub.getName());
+											eventSub.setName(s.getResult().getName());
 											eventSub.setServiceId(serviceId);
 											eventSub.setStatus(Integer.parseInt(s.getResult().getStatus()));
 											redisTemplate.convertAndSend("event:topic:" + serviceId, eventSub);
