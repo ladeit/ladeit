@@ -1,8 +1,10 @@
 package com.ladeit.biz.websocket.events;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,11 +18,20 @@ import java.util.Map;
 @Configuration
 public class RedisReceiver {
 
-	public static Map<EventsWebSocket, List<String>> threadServiceIds;
+	private Map<EventsWebSocket, List<String>> threadServiceIds = new HashMap<>();
+
+	public Map<EventsWebSocket, List<String>> getThreadServiceIds() {
+		return threadServiceIds;
+	}
 
 	public void receiveMessage(String message) {
-		EventSub eventSub = JSONObject.parseObject(message).toJavaObject(EventSub.class);
-		threadServiceIds.forEach((ews,list)->{
+		JSONObject originJson = (JSONObject) ((JSONArray) JSONObject.parse(message)).get(1);
+		String startTime = originJson.getString("startTime");
+		String endTime = originJson.getString("endTime");
+		originJson.put("startTime", ((JSONArray) JSONObject.parse(startTime)).get(1).toString());
+		originJson.put("endTime", ((JSONArray) JSONObject.parse(endTime)).get(1).toString());
+		EventSub eventSub = originJson.toJavaObject(EventSub.class);
+		this.threadServiceIds.forEach((ews, list) -> {
 			list.stream().filter(id -> id.equals(eventSub.getServiceId())).forEach(id -> {
 				ews.sendMessage(eventSub);
 			});

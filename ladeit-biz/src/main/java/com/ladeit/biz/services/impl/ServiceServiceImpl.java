@@ -181,7 +181,7 @@ public class ServiceServiceImpl implements ServiceService {
 	 * 查询服务热力信息
 	 *
 	 * @param startDate,endDate
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.HeatMapAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.HeatMapAO>>
 	 * @date 2019/12/09
 	 * @ahthor MddandPyy
 	 */
@@ -470,7 +470,7 @@ public class ServiceServiceImpl implements ServiceService {
 	 * 获取升级中的service
 	 *
 	 * @param status
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.doo.Service>>
 	 * @author falcomlife
 	 * @date 20-4-21
 	 * @version 1.0.0
@@ -503,6 +503,30 @@ public class ServiceServiceImpl implements ServiceService {
 		} else {
 			result.setResult(list);
 		}
+		return result;
+	}
+
+	/**
+	 * 查询用户可以访问的所有存在的服务Id
+	 *
+	 * @param userId
+	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   java.lang.String>>
+	 * @author falcomlife
+	 * @date 20-4-28
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<List<String>> getServiceBelongUser(String userId) {
+		ExecuteResult<List<String>> result = new ExecuteResult<>();
+		List<UserServiceRelation> usr = this.userServiceRelationDao.getServiceRelationByUserId(userId);
+		if (usr == null || usr.isEmpty()) {
+			result.setCode(Code.NOTFOUND);
+			result.addWarningMessage("未找到属于该人员的服务");
+			return result;
+		}
+		List<String> list =
+				usr.stream().filter(userServiceRelation -> this.serviceDao.getById(userServiceRelation.getServiceId()) != null).filter(userServiceRelation -> userServiceRelation.getRoleNum() != null && userServiceRelation.getRoleNum().contains("R")).map(userServiceRelation -> userServiceRelation.getServiceId()).collect(Collectors.toList());
+		result.setResult(list);
 		return result;
 	}
 }

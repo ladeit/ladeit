@@ -1,5 +1,6 @@
 package com.ladeit.biz.websocket.events;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.util.Date;
@@ -23,7 +24,10 @@ public class EventSub {
 	private String kind;
 	private String name;
 	private String namespace;
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone="GMT+8")
 	private Date startTime;
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone="GMT+8")
 	private Date endTime;
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone="GMT+8")
 	private Date time;
 }

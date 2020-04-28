@@ -155,4 +155,6 @@ public interface ServiceService {
 	* @param status
 	*/
 	ExecuteResult<List<Service>> getService(String status);
+
+	ExecuteResult<List<String>> getServiceBelongUser(String userId);
 }

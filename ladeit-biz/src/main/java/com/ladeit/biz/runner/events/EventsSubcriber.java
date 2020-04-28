@@ -193,11 +193,13 @@ public class EventsSubcriber {
 											redisTemplate.boundZSetOps("lifecycle:" + envId).add(event, time);
 											redisTemplate.boundZSetOps("lifecycle:" + envId).expire(30,
 													TimeUnit.MINUTES);
+
 											EventSub eventSub = new EventSub();
 											BeanUtils.copyProperties(event, eventSub);
 											eventSub.setServiceId(serviceId);
 											eventSub.setStatus(Integer.parseInt(s.getResult().getStatus()));
 											redisTemplate.convertAndSend("event:topic:" + serviceId, eventSub);
+
 											try {
 												this.releaseLifecycleMonitor(v1event, serviceId, s.getResult());
 											} catch (Exception e) {
@@ -224,9 +226,9 @@ public class EventsSubcriber {
 				try {
 					if (!this.stop) {
 						if (StringUtils.isNotBlank(currentRev)) {
-							this.eventHandler.error(envId, currentRev);
+							this.eventHandler.error(envId, null);
 						} else {
-							this.eventHandler.error(envId, this.rev);
+							this.eventHandler.error(envId, null);
 						}
 					}
 				} catch (IOException e1) {

@@ -158,7 +158,7 @@ public class PodSubcriber {
 				try {
 					if (!this.stop) {
 						if (StringUtils.isNotBlank(currentRev)) {
-							this.eventHandler.error(envId, currentRev);
+							this.eventHandler.error(envId, null);
 						} else {
 							this.eventHandler.error(envId, null);
 						}

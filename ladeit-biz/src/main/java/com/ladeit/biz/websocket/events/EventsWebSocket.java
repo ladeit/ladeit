@@ -4,6 +4,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.ladeit.biz.config.SpringBean;
 import com.ladeit.biz.config.WebSocketConfig;
 import com.ladeit.biz.services.ReleaseService;
+import com.ladeit.biz.services.ServiceService;
+import com.ladeit.common.ExecuteResult;
+import com.ladeit.common.system.Code;
 import com.ladeit.util.ListUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -17,6 +20,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,7 +30,7 @@ import java.util.Map;
  * @create: 2019/07/31
  * @version: 1.0.0
  */
-@ServerEndpoint(value = "/api/v1/events/{serviceIds}", configurator = WebSocketConfig.class)
+@ServerEndpoint(value = "/api/v1/events/{userId}", configurator = WebSocketConfig.class)
 @Component
 @Scope("prototype")
 @Slf4j
@@ -46,11 +50,15 @@ public class EventsWebSocket {
 	 * @Return void
 	 */
 	@OnOpen
-	public void onOpen(Session session, @PathParam("serviceIds") String serviceIds) {
+	public void onOpen(Session session, @PathParam("userId") String userId) {
 		this.session = session;
-		this.ids = serviceIds.split(",");
+		ServiceService serviceService = SpringBean.getObject(ServiceService.class);
 		RedisReceiver redisReceiver = SpringBean.getObject(RedisReceiver.class);
-		redisReceiver.threadServiceIds.put(this,Arrays.asList(ids));
+		ExecuteResult<List<String>> result = serviceService.getServiceBelongUser(userId);
+		if (result.getCode() != Code.SUCCESS) {
+			return;
+		}
+		redisReceiver.getThreadServiceIds().put(this, result.getResult());
 		log.info("成功建立socket链接");
 	}
 
@@ -68,6 +76,8 @@ public class EventsWebSocket {
 	public void onClose() {
 		try {
 			this.session.close();
+			RedisReceiver redisReceiver = SpringBean.getObject(RedisReceiver.class);
+			redisReceiver.getThreadServiceIds().remove(this);
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}

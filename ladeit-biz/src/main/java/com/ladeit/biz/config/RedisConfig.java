@@ -71,13 +71,17 @@ public class RedisConfig {
 	}
 
 	@Bean
-	public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
+	public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,
+												   MessageListenerAdapter listenerAdapter) {
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory);
-		container.addMessageListener(
-				new MessageListenerAdapter(
-						redisReceiver, "receiveMessage"),new PatternTopic("event:topic:*"));
+		container.addMessageListener(listenerAdapter, new PatternTopic("event:topic:*"));
 		return container;
+	}
+
+	@Bean
+	public MessageListenerAdapter listenerAdapter() {
+		return new MessageListenerAdapter(redisReceiver, "receiveMessage");
 	}
 
 
