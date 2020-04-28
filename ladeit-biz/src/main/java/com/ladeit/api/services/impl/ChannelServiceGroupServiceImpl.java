@@ -4,12 +4,15 @@ import com.ladeit.api.services.ChannelServiceGroupService;
 import com.ladeit.biz.dao.ChannelServiceGroupDao;
 import com.ladeit.biz.dao.ServiceDao;
 import com.ladeit.biz.dao.ServiceGroupDao;
+import com.ladeit.biz.dao.UserSlackRelationDao;
 import com.ladeit.biz.utils.PropertiesUtil;
 import com.ladeit.common.ExecuteResult;
+import com.ladeit.common.system.Code;
 import com.ladeit.pojo.ao.ChannelServiceGroupAO;
 import com.ladeit.pojo.ao.ResultAO;
 import com.ladeit.pojo.doo.ChannelServiceGroup;
 import com.ladeit.pojo.doo.ServiceGroup;
+import com.ladeit.pojo.doo.UserSlackRelation;
 import io.ebean.SqlRow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,9 @@ public class ChannelServiceGroupServiceImpl implements ChannelServiceGroupServic
     @Autowired
     private PropertiesUtil propertiesUtil;
 
+    @Autowired
+    private UserSlackRelationDao userSlackRelationDao;
+
 
     /**
      * 绑定slack的channel和serviceGroup
@@ -50,6 +56,17 @@ public class ChannelServiceGroupServiceImpl implements ChannelServiceGroupServic
     public ExecuteResult<ResultAO> channelBindGroup(String slackUserId,String token,ChannelServiceGroupAO channelServiceGroupAO) {
         ExecuteResult<ResultAO> result = new ExecuteResult<ResultAO>();
         ResultAO resultAO = new ResultAO();
+
+        UserSlackRelation userSlackRelation = userSlackRelationDao.queryUserSlackRelationBySlackUserId(slackUserId);
+        if(userSlackRelation==null){
+            result.setCode(Code.FAILED);
+            // You have not bind a ladeit account, use /ladeit setup to bind.
+            //result.addErrorMessage("你还未关联ladeit账户，可以使用 `/ladeit setup` 进行关联");
+            result.addErrorMessage("You have not bind a ladeit account, use `/ladeit setup` to bind");
+            return result;
+        }
+
+
         String url = null;
         String channelId = channelServiceGroupAO.getChannelId();
         String channelName = channelServiceGroupAO.getChannelName();

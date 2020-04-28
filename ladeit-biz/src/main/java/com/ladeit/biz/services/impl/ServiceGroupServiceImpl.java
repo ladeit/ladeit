@@ -1655,6 +1655,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	@SlackLogin
 	public ExecuteResult<BotQueryServiceAO> queryServiceGroupInfoBychannel(String slackUserId, String token,String channelId) {
 		ExecuteResult<BotQueryServiceAO> result = new ExecuteResult<BotQueryServiceAO>();
+
 		BotQueryServiceAO botQueryServiceAO = new BotQueryServiceAO();
 		List<ChannelServiceGroup> channelServiceGroups =
 				channelServiceGroupDao.queryInfoByGroupNameAndChannelId(channelId);
@@ -1692,12 +1693,18 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		List<ServiceAO> serviceAOS = new ArrayList<>();
 		User user = SecurityUtils.getSubject()==null?null:(User) SecurityUtils.getSubject().getPrincipal();
 		for (com.ladeit.pojo.doo.Service service : list) {
-			UserServiceRelation userServiceRelation = userServiceRelationDao.getServiceRelation(user.getId(),
-					service.getId());
-			if (userServiceRelation != null && userServiceRelation.getRoleNum().contains("R")) {
+			if("admin".equals(user.getUsername())){
 				ServiceAO serviceAO = new ServiceAO();
 				BeanUtils.copyProperties(service, serviceAO);
 				serviceAOS.add(serviceAO);
+			}else{
+				UserServiceRelation userServiceRelation = userServiceRelationDao.getServiceRelation(user.getId(),
+						service.getId());
+				if (userServiceRelation != null && userServiceRelation.getRoleNum().contains("R")) {
+					ServiceAO serviceAO = new ServiceAO();
+					BeanUtils.copyProperties(service, serviceAO);
+					serviceAOS.add(serviceAO);
+				}
 			}
 		}
 		botQueryServiceAO.setFlag(true);
