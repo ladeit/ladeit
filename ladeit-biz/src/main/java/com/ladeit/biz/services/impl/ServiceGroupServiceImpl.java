@@ -1759,7 +1759,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 
 		} else {
 			resultAO.setFlag(false);
-			resultAO.setMessage("You have not bind your ladeit account yet, please use `/ladeit setup` to bind.");
+			resultAO.setMessage("You have not bound your Ladeit account yet, please use `/ladeit setup` to bind.");
 		}
 		result.setResult(resultAO);
 		return result;

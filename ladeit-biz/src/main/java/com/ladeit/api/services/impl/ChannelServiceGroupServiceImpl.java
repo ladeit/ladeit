@@ -62,7 +62,7 @@ public class ChannelServiceGroupServiceImpl implements ChannelServiceGroupServic
             result.setCode(Code.FAILED);
             // You have not bind a ladeit account, use /ladeit setup to bind.
             //result.addErrorMessage("你还未关联ladeit账户，可以使用 `/ladeit setup` 进行关联");
-            result.addErrorMessage("You have not bind a ladeit account, use `/ladeit setup` to bind");
+            result.addErrorMessage("You have not bind a Ladeit account, use `/ladeit setup` to bind");
             return result;
         }
 
