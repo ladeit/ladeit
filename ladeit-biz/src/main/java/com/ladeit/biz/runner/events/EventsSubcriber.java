@@ -270,8 +270,10 @@ public class EventsSubcriber {
 			}
 			JSONObject owner = ownerRes.getResult();
 			JSONObject status = owner.getJSONObject("status");
-			if ("spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
+			if ("Pod".equals(kind) && "spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
+			}else if ("Pod".equals(kind)) {
+				this.warningBussiness(event, serviceId, s);
 			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
 					"replicas").equals(status.getInteger("readyReplicas")))) {
 				this.warningBussiness(event, serviceId, s);
