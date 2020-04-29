@@ -272,8 +272,9 @@ public class EventsSubcriber {
 			JSONObject status = owner.getJSONObject("status");
 			if ("spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
-			} else if (status.getInteger("replicas") != null && !status.getInteger("replicas").equals(status.getInteger("readyReplicas"))) {
-				this.warningBussiness(uid, kind, event, serviceId, s);
+			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
+					"replicas").equals(status.getInteger("readyReplicas")))) {
+				this.warningBussiness(event, serviceId, s);
 			} else {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
@@ -290,7 +291,7 @@ public class EventsSubcriber {
 	}
 
 	@Transactional
-	public void warningBussiness(String uid, String kind, V1Event event, String serviceId, Service s) throws IOException {
+	public void warningBussiness(V1Event event, String serviceId, Service s) throws IOException {
 
 		ServiceGroupService serviceGroupService = SpringBean.getObject(ServiceGroupService.class);
 		MessageService messageService = SpringBean.getObject(MessageService.class);

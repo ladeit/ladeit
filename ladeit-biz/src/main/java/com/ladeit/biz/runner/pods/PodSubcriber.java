@@ -205,12 +205,17 @@ public class PodSubcriber {
 				int replicas = owner.getJSONObject("status").getInteger("replicas");
 				if (readyReplicas == replicas) {
 					int[] type = {4, 8, 10, 11};
+					boolean update = false;
 					for (int t : type) {
 						CandidateDto candidatedto =
 								(CandidateDto) redisTemplate.opsForSet().pop("candidateCache:" + serviceId + "," + releaseId + "," + t);
 						if (candidatedto != null) {
 							this.deploymentFinishBusiness(candidatedto, serviceId, releaseId);
+							update = true;
 						}
+					}
+					if(!update){
+						this.updateService(serviceId, "0");
 					}
 				}
 			}
