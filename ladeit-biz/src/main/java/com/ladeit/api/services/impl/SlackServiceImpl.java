@@ -95,7 +95,7 @@ public class SlackServiceImpl implements SlackService {
         }else{
             // You have already bound.
             //result.setResult("你已经关联过ladeit账户");
-            result.setResult("You have already bound a ladeit account.");
+            result.setResult("You have already bound a Ladeit account.");
         }
 
 
@@ -198,7 +198,7 @@ public class SlackServiceImpl implements SlackService {
                 result.setCode(Code.STATUS_ERROR);
                 // "<@"+publicationAO.getSlackUserId()+"> time out to deploy."
                 //result.addErrorMessage("<@"+publicationAO.getSlackUserId()+"> 操作超时，无法进行滚动发布");
-                result.addErrorMessage("Failed, <@"+publicationAO.getSlackUserId()+"> time out to deploy.");
+                result.addErrorMessage("<@"+publicationAO.getSlackUserId()+">, failed, time out to deploy.");
 
                 // result.setResult("镜像已失效，无法进行滚动发布");
             }else{
