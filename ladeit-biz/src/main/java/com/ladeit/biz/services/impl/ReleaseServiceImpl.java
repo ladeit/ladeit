@@ -846,14 +846,14 @@ public class ReleaseServiceImpl implements ReleaseService {
 		Service servcieNow = s.getResult();
 		if (servcieNow == null) {
 			result.setCode(Code.NOTFOUND);
-			String message = messageUtils.matchMessage("M0016", new Object[]{}, Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0016", new Object[]{}, auto != null && !auto ? true : false);
 			result.addWarningMessage(message);
 
 			return result;
 		}
 		if (!"-1".equals(servcieNow.getStatus()) && !"0".equals(servcieNow.getStatus()) && !"8".equals(servcieNow.getStatus())) {
 			result.setCode(Code.STATUS_ERROR);
-			String message = messageUtils.matchMessage("M0017", new Object[]{}, Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0017", new Object[]{}, auto != null && !auto ? true : false);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -870,7 +870,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 				replicationControllers.getResult() == null || replicationControllers.getResult().size() == 0;
 		if (deploymentflag && statefulSetflag && replicationControllerflag) {
 			result.setCode(Code.NOTFOUND);
-			String message = messageUtils.matchMessage("M0018", new Object[]{}, Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0018", new Object[]{}, auto != null && !auto ? true : false);
 			result.addWarningMessage(message);
 			return result;
 		}
