@@ -26,8 +26,10 @@ stages:
   stage: deploy
   script:
   - echo "<<<<<deploy>>>>>"
-  - '[[ $CI_ENVIRONMENT_NAME == "dev" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"5OibZDibznzQyJyZqBNurCvwQ7y9ibSSj5MTiaQLBcGS3g4\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
-  - '[[ $CI_ENVIRONMENT_NAME == "prod" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"GLLUltb2L4q94QG4e1MJKKk2MslfTEZ74jX4pRcFJts\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
+  # - '[[ $CI_ENVIRONMENT_NAME == "dev" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"5OibZDibznzQyJyZqBNurCvwQ7y9ibSSj5MTiaQLBcGS3g4\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
+  # - '[[ $CI_ENVIRONMENT_NAME == "prod" ]] && curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"GLLUltb2L4q94QG4e1MJKKk2MslfTEZ74jX4pRcFJts\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
+  - 'curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"5OibZDibznzQyJyZqBNurCvwQ7y9ibSSj5MTiaQLBcGS3g4\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}"'
+  - 'curl --url $PUSH_URL -H "Content-Type: application/json" -X POST --data "{\"token\":\"GLLUltb2L4q94QG4e1MJKKk2MslfTEZ74jX4pRcFJts\",\"serviceName\":\"ladeit-service\",\"image\":\"$BASE_REGISTRY/ladeit:$CI_PIPELINE_ID\",\"version\":\"$CI_PIPELINE_ID\",\"refs\":\"$CI_COMMIT_REF_NAME\", \"commitHash\":\"$CI_COMMIT_SHA\"}" && exit 0'
 .env-dev: &environment-dev
   only:
     refs:
