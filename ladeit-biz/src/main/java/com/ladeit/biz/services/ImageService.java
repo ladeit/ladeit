@@ -5,6 +5,8 @@ import com.ladeit.pojo.ao.ImageAO;
 import com.ladeit.pojo.ao.QueryImageAO;
 import com.ladeit.pojo.doo.Image;
 
+import java.util.List;
+
 /**
  * @program: ladeit
  * @description: ImageService
@@ -44,4 +46,14 @@ public interface ImageService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<Image> getImageByReleaseId(String releaseId);
+
+	/**
+	* 根据service获取所有的image
+	* @author falcomlife
+	* @date 20-4-29
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Image>>
+	* @param id
+	*/
+	ExecuteResult<List<Image>> getImageByServiceId(String id);
 }

@@ -54,22 +54,23 @@ public class ImageServiceImpl implements ImageService {
 
 	/**
 	 * 查询镜像详情（有权限校验）
+	 *
 	 * @param serviceId, imageId
 	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.QueryServiceAO>>
 	 * @date 2020/3/17
 	 * @ahthor MddandPyy
 	 */
 	@Override
-	@Authority(type = "service",level = "R")
+	@Authority(type = "service", level = "R")
 	public ExecuteResult<QueryImageAO> getImageById(String serviceId, String imageId) {
 		ExecuteResult<QueryImageAO> result = new ExecuteResult<>();
 		Image image = imageDao.getImageById(imageId);
-		if(image!=null){
+		if (image != null) {
 			List<Release> releases = releaseDao.getReleasesByServiceIdAndImageId(serviceId, image.getId());
 			List<ReleaseAO> releaseAOS = new ListUtil<Release, ReleaseAO>().copyList(releases,
 					ReleaseAO.class);
 			QueryImageAO imageAO = new QueryImageAO();
-			BeanUtils.copyProperties(image,imageAO);
+			BeanUtils.copyProperties(image, imageAO);
 			imageAO.setReleaseAO(releaseAOS);
 			result.setResult(imageAO);
 		}
@@ -93,8 +94,30 @@ public class ImageServiceImpl implements ImageService {
 			result = new ExecuteResultUtil<Image>().copyWarnError(candidate);
 		} else {
 			Image image = this.imageDao.getImageById(candidate.getResult().getImageId());
- 			result.setResult(image);
+			result.setResult(image);
 		}
 		return result;
+	}
+
+	/**
+	 * 根据serviceId获取所有的image
+	 *
+	 * @param id
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Image>>
+	 * @author falcomlife
+	 * @date 20-4-29
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<List<Image>> getImageByServiceId(String id) {
+		ExecuteResult<List<Image>> result = new ExecuteResult<>();
+		List<Image> list = this.imageDao.queryImages(id);
+		if (list == null || list.isEmpty()) {
+			result.setCode(Code.NOTFOUND);
+			result.addWarningMessage("未找到任何image");
+		}
+		result.setResult(list);
+		return result;
+
 	}
 }

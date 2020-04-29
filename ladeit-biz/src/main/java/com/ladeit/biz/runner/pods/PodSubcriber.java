@@ -146,15 +146,18 @@ public class PodSubcriber {
 					Watch.Response<V1Pod> item = watch.next();
 					if (item != null) {
 						V1Pod v1pod = item.object;
-						currentRev = v1pod.getMetadata().getResourceVersion();
 						try {
+							currentRev = v1pod.getMetadata().getResourceVersion();
 							this.releaseLifecycleMonitor(v1pod);
 						} catch (Exception e) {
+							// 业务部分出现问题不影响下面event的接受
 							continue;
 						}
 					}
 				}
 			} catch (Exception e) {
+				// 如果接收后续events的时候报错，重新开启一个新的订阅者
+				// TODO 不知道为什么该watch订阅者会自己关闭
 				try {
 					if (!this.stop) {
 						if (StringUtils.isNotBlank(currentRev)) {
@@ -171,6 +174,7 @@ public class PodSubcriber {
 			} finally {
 				try {
 					watch.close();
+					this.stop = true;
 				} catch (IOException e) {
 					log.error(e.getMessage(), e);
 				}

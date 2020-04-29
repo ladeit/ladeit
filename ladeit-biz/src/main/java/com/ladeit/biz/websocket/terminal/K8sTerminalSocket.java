@@ -58,7 +58,6 @@ public class K8sTerminalSocket {
     @OnOpen
     public void onOpen(Session session, @PathParam("pod") String pod, @PathParam("container") String container,
                        @PathParam("serviceId") String serviceId) throws IOException, ParseException {
-        log.info("~~~~~~~~~~~~~~connect to K8sTerminalSocket success~~~~~~~~~~~~~~~~");
         // 初始化参数
         this.session = session;
         this.serviceId = serviceId;
@@ -75,7 +74,6 @@ public class K8sTerminalSocket {
         List<Byte> listbyte = new ArrayList<>();
         String poolid = Thread.currentThread().getThreadGroup().getName() + Thread.currentThread().getId();
         pool.put(poolid, listbyte);
-        log.info("~~~~~~~~~~~~~~poolid:" + poolid + "~~~~~~~~~~~~~~~~");
         // 封装命令行
         final Options options = new Options();
         CommandLineParser parser = new DefaultParser();
@@ -99,19 +97,16 @@ public class K8sTerminalSocket {
         httpClient.setDispatcher(dispatcher);
         apiClient.setHttpClient(httpClient);
         Configuration.setDefaultApiClient(apiClient);
-        log.info("~~~~~~~~~~~~~~Config:" + cluster.getK8sKubeconfig() + "~~~~~~~~~~~~~~~~");
         // 创建链接
         Exec exec = new Exec(apiClient);
         try {
             process = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"/bin/bash"} :
                     commands.toArray(new String[commands.size()]), container, true, true, poolid);
-            log.info("~~~~~~~~~~~~~~process:" + process + "~~~~~~~~~~~~~~~~");
             // 开启线程接受数据并发送到前台
             this.singleThreadPool = new ThreadPoolExecutor(20, 20,
                     0L, TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<Runnable>(1024), threadFactory, new ThreadPoolExecutor.AbortPolicy());
             this.singleThreadPool.execute(() -> this.receiveMessage(listbyte));
-            log.info("~~~~~~~~~~~~~~execute~~~~~~~~~~~~~~~~");
         } catch (ApiException e) {
             log.error(e.getMessage(), e);
         }
@@ -238,7 +233,6 @@ public class K8sTerminalSocket {
             try {
                 if (listbyte.size() != 0) {
                     ByteBuffer bf = ByteBuffer.wrap(bytesOrigin);
-                    log.info("~~~~~~~~~~~~~~bf:" + bf + "~~~~~~~~~~~~~~~~");
                     sendMessage(bf);
                 }
             } catch (IOException e) {

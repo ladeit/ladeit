@@ -1,5 +1,6 @@
 package com.ladeit.biz.runner.events;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.reflect.TypeToken;
 import com.ladeit.biz.config.SpringBean;
@@ -11,12 +12,14 @@ import com.ladeit.biz.utils.CommonConsant;
 import com.ladeit.biz.websocket.events.EventSub;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.common.system.Code;
+import com.ladeit.pojo.ao.ImageAO;
 import com.ladeit.pojo.ao.TopologyAO;
 import com.ladeit.pojo.ao.topology.Match;
 import com.ladeit.pojo.ao.topology.Rule;
 import com.ladeit.pojo.doo.*;
 import com.ladeit.pojo.dto.CandidateDto;
 import com.ladeit.pojo.dto.Event;
+import com.ladeit.util.ListUtil;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.OkHttpClient;
 import io.kubernetes.client.ApiClient;
@@ -152,10 +155,10 @@ public class EventsSubcriber {
 					if (item != null) {
 						V1Event v1event = item.object;
 						if (!"Expired".equals(v1event.getReason())) {
-							currentRev = v1event.getMetadata().getResourceVersion();
-							String kind = v1event.getInvolvedObject().getKind();
-							String uid = v1event.getInvolvedObject().getUid();
 							try {
+								currentRev = v1event.getMetadata().getResourceVersion();
+								String kind = v1event.getInvolvedObject().getKind();
+								String uid = v1event.getInvolvedObject().getUid();
 								ExecuteResult<JSONObject> result = resourceService.getResourceByUid(config,
 										v1event.getInvolvedObject().getUid(), v1event.getInvolvedObject().getKind());
 								switch (result.getCode()) {
@@ -169,44 +172,12 @@ public class EventsSubcriber {
 												continue;
 											}
 											log.info("verison" + currentRev + ",kind:" + v1event.getInvolvedObject().getKind() + "," + "namespace:" + v1event.getInvolvedObject().getNamespace() + ",name" + v1event.getInvolvedObject().getName() + ", reason:" + v1event.getReason() + ",message" + v1event.getMessage());
-											long time = System.currentTimeMillis();
-											event.setClusterId(cluster.getId());
-											event.setEnvId(envId);
-											event.setEventUid(v1event.getMetadata().getUid());
-											event.setResourceUid(v1event.getInvolvedObject().getUid());
-											event.setKind(v1event.getInvolvedObject().getKind());
-											event.setName(v1event.getInvolvedObject().getName());
-											event.setNamespace(v1event.getMetadata().getNamespace());
-											event.setMessage(v1event.getMessage());
-											event.setNote(v1event.getMessage());
-											event.setReason(v1event.getReason());
-											event.setType(v1event.getType());
-											event.setStartTime(v1event.getFirstTimestamp().toDate());
-											event.setEndTime(v1event.getLastTimestamp().toDate());
-											redisTemplate.boundZSetOps("head:" + envId).add(event, time);
-											redisTemplate.boundZSetOps("head:" + envId).expire(30, TimeUnit.MINUTES);
-											redisTemplate.boundZSetOps("notice:" + envId).add(event, time);
-											redisTemplate.boundZSetOps("notice:" + envId).expire(30, TimeUnit.MINUTES);
-											redisTemplate.boundZSetOps("service:" + envId).add(event, time);
-											redisTemplate.boundZSetOps("service:" + envId).expire(30,
-													TimeUnit.MINUTES);
-											redisTemplate.boundZSetOps("lifecycle:" + envId).add(event, time);
-											redisTemplate.boundZSetOps("lifecycle:" + envId).expire(30,
-													TimeUnit.MINUTES);
-
-											EventSub eventSub = new EventSub();
-											BeanUtils.copyProperties(event, eventSub);
-											eventSub.setResourceName(eventSub.getName());
-											eventSub.setName(s.getResult().getName());
-											eventSub.setServiceId(serviceId);
-											eventSub.setStatus(Integer.parseInt(s.getResult().getStatus()));
-											redisTemplate.convertAndSend("event:topic:" + serviceId, eventSub);
-
-											try {
-												this.releaseLifecycleMonitor(v1event, serviceId, s.getResult());
-											} catch (Exception e) {
-												continue;
-											}
+											// 在redis中存储半小时的历史event信息
+											this.redisEventsHistory(event, v1event);
+											// redis发布实时信息
+											this.redisEventActual(event, s.getResult());
+											// 执行生命周期检测，修改数据库信息
+											this.releaseLifecycleMonitor(v1event, serviceId, s.getResult());
 										} else {
 											log.error("该资源没有serviceId的lables，可能不受ladeit管控");
 										}
@@ -218,12 +189,15 @@ public class EventsSubcriber {
 										log.info(kind + ":" + uid + "出现异常");
 								}
 							} catch (Exception e) {
+								// 业务部分出现问题不影响下面event的接受
 								continue;
 							}
 						}
 					}
 				}
 			} catch (Exception e) {
+				// 如果接收后续events的时候报错，重新开启一个新的订阅者
+				// TODO 不知道为什么该watch订阅者会自己关闭
 				log.error("<<<<namespace:" + env.getNamespace() + " envId:" + envId + " eventUidId: " + event.getEventUid() + " error >>>>");
 				try {
 					if (!this.stop) {
@@ -241,11 +215,77 @@ public class EventsSubcriber {
 			} finally {
 				try {
 					watch.close();
+					this.stop = true;
 				} catch (IOException e) {
 					log.error(e.getMessage(), e);
 				}
 			}
 		}).start();
+	}
+
+	/**
+	 * 在redis中存储半小时的历史event信息
+	 *
+	 * @param event
+	 * @param v1event
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-4-29
+	 * @version 1.0.0
+	 */
+	private void redisEventsHistory(Event event, V1Event v1event) {
+		long time = System.currentTimeMillis();
+		event.setClusterId(cluster.getId());
+		event.setEnvId(envId);
+		event.setEventUid(v1event.getMetadata().getUid());
+		event.setResourceUid(v1event.getInvolvedObject().getUid());
+		event.setKind(v1event.getInvolvedObject().getKind());
+		event.setName(v1event.getInvolvedObject().getName());
+		event.setNamespace(v1event.getMetadata().getNamespace());
+		event.setMessage(v1event.getMessage());
+		event.setNote(v1event.getMessage());
+		event.setReason(v1event.getReason());
+		event.setType(v1event.getType());
+		event.setStartTime(v1event.getFirstTimestamp().toDate());
+		event.setEndTime(v1event.getLastTimestamp().toDate());
+		redisTemplate.boundZSetOps("head:" + envId).add(event, time);
+		redisTemplate.boundZSetOps("head:" + envId).expire(30, TimeUnit.MINUTES);
+		redisTemplate.boundZSetOps("notice:" + envId).add(event, time);
+		redisTemplate.boundZSetOps("notice:" + envId).expire(30, TimeUnit.MINUTES);
+		redisTemplate.boundZSetOps("service:" + envId).add(event, time);
+		redisTemplate.boundZSetOps("service:" + envId).expire(30,
+				TimeUnit.MINUTES);
+		redisTemplate.boundZSetOps("lifecycle:" + envId).add(event, time);
+		redisTemplate.boundZSetOps("lifecycle:" + envId).expire(30,
+				TimeUnit.MINUTES);
+	}
+
+	/**
+	 * redis发布实时信息
+	 *
+	 * @param event
+	 * @param s
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-4-29
+	 * @version 1.0.0
+	 */
+	private void redisEventActual(Event event, Service s) {
+		ImageService imageService = SpringBean.getObject(ImageService.class);
+		ExecuteResult<List<Image>> i = imageService.getImageByServiceId(s.getId());
+		EventSub eventSub = new EventSub();
+		BeanUtils.copyProperties(event, eventSub);
+		eventSub.setResourceName(eventSub.getName());
+		eventSub.setName(s.getName());
+		eventSub.setServiceId(s.getId());
+		eventSub.setStatus(Integer.parseInt(s.getStatus()));
+		if (i.getCode() == Code.SUCCESS) {
+			eventSub.setImageAOS(new ListUtil<Image, ImageAO>().copyList(i.getResult(), ImageAO.class));
+			eventSub.setImageId(s.getImageId());
+			eventSub.setImageVersion(s.getImageVersion());
+			eventSub.setImagenum(i.getResult().size());
+		}
+		redisTemplate.convertAndSend("event:topic:" + s.getId(), JSONObject.toJSONString(eventSub));
 	}
 
 	/**
@@ -272,7 +312,7 @@ public class EventsSubcriber {
 			JSONObject status = owner.getJSONObject("status");
 			if ("Pod".equals(kind) && "spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
-			}else if ("Pod".equals(kind)) {
+			} else if ("Pod".equals(kind)) {
 				// 如果pod出现异常，一般是replicaset已经成功扩展出了新的pod，但是pod启动异常，此时服务未达到希望达到的运行数量，系统认为是异常状态。
 				this.warningBussiness(event, serviceId, s);
 			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
