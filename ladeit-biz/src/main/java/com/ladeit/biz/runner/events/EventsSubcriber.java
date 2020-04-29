@@ -272,12 +272,14 @@ public class EventsSubcriber {
 			JSONObject status = owner.getJSONObject("status");
 			if ("Pod".equals(kind) && "spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
-			} else if ("Pod".equals(kind) || "ReplicaSet".equals(kind) || "Deployment".equals(kind)) {
+			}else if ("Pod".equals(kind)) {
+				// 如果pod出现异常，一般是replicaset已经成功扩展出了新的pod，但是pod启动异常，此时服务未达到希望达到的运行数量，系统认为是异常状态。
 				this.warningBussiness(event, serviceId, s);
-			} /*else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
+			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
 					"replicas").equals(status.getInteger("readyReplicas")))) {
+				// 如果replicaset或者deployment发生异常event，而且他们的希望值和准备好值不相等，被认为是没有达到希望的运行数量，系统认为是异常状态
 				this.warningBussiness(event, serviceId, s);
-			}*/ else {
+			} else {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
 						"readyReplicas"));

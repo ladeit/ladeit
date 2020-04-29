@@ -201,9 +201,9 @@ public class PodSubcriber {
 			if (owner.getJSONObject("status").getInteger("replicas") != null && owner.getJSONObject("status").getInteger("replicas").equals(0)) {
 				this.updateService(serviceId, "0");
 			} else {
-				int readyReplicas = owner.getJSONObject("status").getInteger("readyReplicas");
-				int replicas = owner.getJSONObject("status").getInteger("replicas");
-				if (readyReplicas == replicas) {
+				Integer readyReplicas = owner.getJSONObject("status").getInteger("readyReplicas");
+				Integer replicas = owner.getJSONObject("status").getInteger("replicas");
+				if (readyReplicas != null && replicas != null && readyReplicas.equals(replicas)) {
 					int[] type = {4, 8, 10, 11};
 					boolean update = false;
 					for (int t : type) {
@@ -214,7 +214,7 @@ public class PodSubcriber {
 							update = true;
 						}
 					}
-					if(!update){
+					if (!update) {
 						this.updateService(serviceId, "0");
 					}
 				}
