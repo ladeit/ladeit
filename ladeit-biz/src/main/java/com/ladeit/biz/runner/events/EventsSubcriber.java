@@ -272,12 +272,12 @@ public class EventsSubcriber {
 			JSONObject status = owner.getJSONObject("status");
 			if ("Pod".equals(kind) && "spec.containers{istio-proxy}".equals(event.getInvolvedObject().getFieldPath())) {
 				log.info("istio组件报错不进行处理:" + event.getMessage());
-			}else if ("Pod".equals(kind)) {
+			} else if ("Pod".equals(kind) || "ReplicaSet".equals(kind) || "Deployment".equals(kind)) {
 				this.warningBussiness(event, serviceId, s);
-			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
+			} /*else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
 					"replicas").equals(status.getInteger("readyReplicas")))) {
 				this.warningBussiness(event, serviceId, s);
-			} else {
+			}*/ else {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
 						"readyReplicas"));
