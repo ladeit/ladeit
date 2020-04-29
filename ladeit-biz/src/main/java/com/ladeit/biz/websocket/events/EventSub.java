@@ -1,9 +1,11 @@
 package com.ladeit.biz.websocket.events;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ladeit.pojo.ao.ImageAO;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @program; ladeit-parent
@@ -17,6 +19,10 @@ import java.util.Date;
 public class EventSub {
 
 	private String serviceId;
+	private List<ImageAO> imageAOS;
+	private String imageVersion;
+	private String imageId;
+	private int imagenum;
 	private int status;
 	private String reason;
 	private String type;
