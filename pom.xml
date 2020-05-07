@@ -6,7 +6,7 @@
 	<groupId>com.ladeit</groupId>
 	<artifactId>ladeit-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>0.3.1</version>
+	<version>0.3.2-SNAPSHOT</version>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -256,7 +256,7 @@
 
 	<scm>
 		<developerConnection>${scm.developer.connection}</developerConnection>
-		<tag>v0.3.1</tag>
+		<tag>v0.2.0</tag>
 	</scm>
 
 	<repositories>
