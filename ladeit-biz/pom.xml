@@ -3,7 +3,7 @@
     <parent>
         <artifactId>ladeit-parent</artifactId>
         <groupId>com.ladeit</groupId>
-        <version>0.1.3</version>
+        <version>0.1.3-SNAPSHOT</version>
     </parent>
     <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
