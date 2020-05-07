@@ -28,6 +28,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<scm.developer.connection/>
 	</properties>
 
 	<dependencyManagement>
@@ -253,12 +254,10 @@
 		</plugins>
 	</build>
 
-	<!--
 	<scm>
-		<developerConnection>scm:git:https://github.com/ladeit/ladeit.git</developerConnection>
+		<developerConnection>${scm.developer.connection}</developerConnection>
 		<tag>v0.1.1</tag>
 	</scm>
-	-->
 
 	<repositories>
 		<repository>
