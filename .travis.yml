@@ -54,6 +54,9 @@ jobs:
               docker build -t $IMAGE_NAME .
               docker push $IMAGE_NAME
 
+              docker tag $IMAGE_NAME ladeit/ladeit-allinone:latest
+              docker push ladeit/ladeit-allinone:latest
+
               # mvn install jib:build \
               #   -Djib.from.image=openjdk:8 \
               #   -Djib.to.image=registry.hub.docker.com/ladeit/ladeit-allinone:$RELEASE_VERSION \
@@ -86,6 +89,9 @@ jobs:
               echo "$ALIYUN_DOCKER_PASSWORD" | docker login registry.cn-hangzhou.aliyuncs.com -u "$ALIYUN_DOCKER_USERNAME" --password-stdin
               docker build -t $IMAGE_NAME .
               docker push $IMAGE_NAME
+
+              docker tag $IMAGE_NAME registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:latest
+              docker push registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:latest
               
               # mvn install jib:build \
               #   -Djib.from.image=openjdk:8 \
