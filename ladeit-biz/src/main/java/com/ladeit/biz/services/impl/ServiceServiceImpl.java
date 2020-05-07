@@ -181,7 +181,7 @@ public class ServiceServiceImpl implements ServiceService {
 	 * 查询服务热力信息
 	 *
 	 * @param startDate,endDate
-	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.HeatMapAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.HeatMapAO>>
 	 * @date 2019/12/09
 	 * @ahthor MddandPyy
 	 */
@@ -470,7 +470,7 @@ public class ServiceServiceImpl implements ServiceService {
 	 * 获取升级中的service
 	 *
 	 * @param status
-	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.doo.Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Service>>
 	 * @author falcomlife
 	 * @date 20-4-21
 	 * @version 1.0.0
@@ -510,7 +510,7 @@ public class ServiceServiceImpl implements ServiceService {
 	 * 查询用户可以访问的所有存在的服务Id
 	 *
 	 * @param userId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   java.lang.String>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<java.lang.String>>
 	 * @author falcomlife
 	 * @date 20-4-28
 	 * @version 1.0.0
