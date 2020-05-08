@@ -8,13 +8,13 @@ jdk: openjdk8
 
 sudo: required
 
-before_install:
-  - |
-    (
-      echo '{"registry-mirrors": ["https://e3dpbjzs.mirror.aliyuncs.com"]}' | sudo tee /etc/docker/daemon.json
-      sudo service docker restart
-      sudo cat /etc/docker/daemon.json
-    )
+# before_install:
+#   - |
+#     (
+#       echo '{"registry-mirrors": ["https://e3dpbjzs.mirror.aliyuncs.com"]}' | sudo tee /etc/docker/daemon.json
+#       sudo service docker restart
+#       sudo cat /etc/docker/daemon.json
+#     )
 
 install: skip
 
