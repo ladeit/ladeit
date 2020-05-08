@@ -34,7 +34,7 @@ docker run ladeit/ladeit
 ``` 
 helm install helm/
 ```
-如果你想要在初始化helm的chart的时候，同时创建一个ingress，你可以像这样运行脚本
+如果你想要在初始化helm的chart的时候，同时创建一个 ingress，你可以像这样运行脚本
 ```
 helm install helm/ --set ingress.enabled=true
 ``` 
