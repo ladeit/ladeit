@@ -31,8 +31,17 @@ As the containerization and micro-service going on, the operation work are more 
 docker run ladeit/ladeit
 ```
 ##### helm
+Run the script in the root directory of the project.
+``` 
+helm install helm/
 ```
-helm apply ....
+If you would like to create a ingress when init the helm chart,you can run the script like this.
+```
+helm install helm/ --set ingress.enabled=true
+``` 
+We strongly recommend that in a production environment, you should provide a persistent volume for the container to hold the database data.
+```
+helm install helm/ --set volume.enabled=true --set persistentVolumeClaim.enabled=true
 ```
 ### Initialization
 

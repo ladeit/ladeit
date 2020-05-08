@@ -12,7 +12,7 @@ service:
   externalPort: 8000
   internalPort: 8000
 ingress:
-  enabled: true
+  enabled: false
   hosts:
     - ladeit-example.local
 resources:
