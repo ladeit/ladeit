@@ -47,99 +47,105 @@ jobs:
               mvn clean install -Dmaven.test.skip=true
               cp ladeit-biz/target/ladeit.jar .
 
-              export RELEASE_VERSION=$TRAVIS_TAG
-              export IMAGE_NAME=ladeit/ladeit-allinone:$RELEASE_VERSION
+              # export RELEASE_VERSION=$TRAVIS_TAG
+              export RELEASE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate \
+                                            -Dexpression=project.version -q -DforceStdout)
+              export IMAGE_NAME=ladeit/ladeit:$RELEASE_VERSION
 
               echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
               docker build -t $IMAGE_NAME .
               docker push $IMAGE_NAME
 
-              docker tag $IMAGE_NAME ladeit/ladeit-allinone:latest
-              docker push ladeit/ladeit-allinone:latest
+              docker tag $IMAGE_NAME ladeit/ladeit:latest
+              docker push ladeit/ladeit:latest
 
               # mvn install jib:build \
               #   -Djib.from.image=openjdk:8 \
-              #   -Djib.to.image=registry.hub.docker.com/ladeit/ladeit-allinone:$RELEASE_VERSION \
+              #   -Djib.to.image=registry.hub.docker.com/ladeit/ladeit:$RELEASE_VERSION \
               #   -Djib.to.auth.username=$DOCKER_USERNAME \
               #   -Djib.to.auth.password=$DOCKER_PASSWORD \
               #   -pl ladeit-biz -am
             fi
           )
       name: push all in one image to docker hub
-    - script: 
-        - | 
-          (
-            #
-            # only push all-in-one image that tag triggered to aliyun
-            #
-            if [ "$TRAVIS_TAG" != "" ]; then
-              cd $TRAVIS_BUILD_DIR/ladeit-web/
-              git fetch --all
-              git checkout $TRAVIS_TAG
-              npm install && npm run build
-              mv $TRAVIS_BUILD_DIR/ladeit-web/build/* $TRAVIS_BUILD_DIR/ladeit-biz/src/main/resources/static/
+    # some error pushing to aliyun in travis
+    # - script: 
+    #     - | 
+    #       (
+    #         #
+    #         # only push all-in-one image that tag triggered to aliyun
+    #         #
+    #         if [ "$TRAVIS_TAG" != "" ]; then
+    #           cd $TRAVIS_BUILD_DIR/ladeit-web/
+    #           git fetch --all
+    #           git checkout $TRAVIS_TAG
+    #           npm install && npm run build
+    #           mv $TRAVIS_BUILD_DIR/ladeit-web/build/* $TRAVIS_BUILD_DIR/ladeit-biz/src/main/resources/static/
 
-              cd $TRAVIS_BUILD_DIR
-              mvn clean install -Dmaven.test.skip=true
-              cp ladeit-biz/target/ladeit.jar .
+    #           cd $TRAVIS_BUILD_DIR
+    #           mvn clean install -Dmaven.test.skip=true
+    #           cp ladeit-biz/target/ladeit.jar .
 
-              export RELEASE_VERSION=$TRAVIS_TAG
-              export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:$RELEASE_VERSION
+    #           # export RELEASE_VERSION=$TRAVIS_TAG
+    #           export RELEASE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate \
+    #                                         -Dexpression=project.version -q -DforceStdout)
+    #           export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:$RELEASE_VERSION
 
-              echo "$ALIYUN_DOCKER_PASSWORD" | docker login registry.cn-hangzhou.aliyuncs.com -u "$ALIYUN_DOCKER_USERNAME" --password-stdin
-              docker build -t $IMAGE_NAME .
-              docker push $IMAGE_NAME
+    #           echo "$ALIYUN_DOCKER_PASSWORD" | docker login registry.cn-hangzhou.aliyuncs.com -u "$ALIYUN_DOCKER_USERNAME" --password-stdin
+    #           docker build -t $IMAGE_NAME .
+    #           docker push $IMAGE_NAME
 
-              docker tag $IMAGE_NAME registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:latest
-              docker push registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:latest
+    #           docker tag $IMAGE_NAME registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:latest
+    #           docker push registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:latest
               
-              # mvn install jib:build \
-              #   -Djib.from.image=openjdk:8 \
-              #   -Djib.to.image=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-allinone:$RELEASE_VERSION \
-              #   -Djib.to.auth.username=$ALIYUN_DOCKER_USERNAME \
-              #   -Djib.to.auth.password=$ALIYUN_DOCKER_PASSWORD \
-              #   -pl ladeit-biz -am
-            fi
-          )
-      name: push all in one image to aliyun
-    - script: 
-        - | 
-          (
-            #
-            # push every ladeit image to aliyun
-            #
-            if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == false ] ||
-               [ "$TRAVIS_TAG" != "" ]; then
+    #           # mvn install jib:build \
+    #           #   -Djib.from.image=openjdk:8 \
+    #           #   -Djib.to.image=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:$RELEASE_VERSION \
+    #           #   -Djib.to.auth.username=$ALIYUN_DOCKER_USERNAME \
+    #           #   -Djib.to.auth.password=$ALIYUN_DOCKER_PASSWORD \
+    #           #   -pl ladeit-biz -am
+    #         fi
+    #       )
+    #   name: push all in one image to aliyun
+    # - script: 
+    #     - | 
+    #       (
+    #         #
+    #         # push every ladeit image to aliyun
+    #         #
+    #         if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == false ] ||
+    #            [ "$TRAVIS_TAG" != "" ]; then
 
-              if [ "$TRAVIS_TAG" != "" ]; then
-                export RELEASE_VERSION=$TRAVIS_TAG
-                export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:$RELEASE_VERSION
-                export L_TOKEN=$LADEIT_TOKEN_PROD
-              else
-                export RELEASE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate \
-                                            -Dexpression=project.version -q -DforceStdout)-build-$TRAVIS_BUILD_NUMBER
-                export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit:$RELEASE_VERSION
-                export L_TOKEN=$LADEIT_TOKEN
-              fi
+    #           if [ "$TRAVIS_TAG" != "" ]; then
+    #             export RELEASE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate \
+    #                                         -Dexpression=project.version -q -DforceStdout)
+    #             export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-base:$RELEASE_VERSION
+    #             export L_TOKEN=$LADEIT_TOKEN_PROD
+    #           else
+    #             export RELEASE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate \
+    #                                         -Dexpression=project.version -q -DforceStdout)-build-$TRAVIS_BUILD_NUMBER
+    #             export IMAGE_NAME=registry.cn-hangzhou.aliyuncs.com/ladeit/ladeit-base:$RELEASE_VERSION
+    #             export L_TOKEN=$LADEIT_TOKEN
+    #           fi
 
-              cd $TRAVIS_BUILD_DIR
-              mvn clean install -Dmaven.test.skip=true
-              cp ladeit-biz/target/ladeit.jar .
+    #           cd $TRAVIS_BUILD_DIR
+    #           mvn clean install -Dmaven.test.skip=true
+    #           cp ladeit-biz/target/ladeit.jar .
 
-              sudo cat /etc/docker/daemon.json
-              echo "$ALIYUN_DOCKER_PASSWORD" | docker login registry.cn-hangzhou.aliyuncs.com -u "$ALIYUN_DOCKER_USERNAME" --password-stdin
-              docker build -t $IMAGE_NAME .
-              docker push $IMAGE_NAME
+    #           sudo cat /etc/docker/daemon.json
+    #           echo "$ALIYUN_DOCKER_PASSWORD" | docker login registry.cn-hangzhou.aliyuncs.com -u "$ALIYUN_DOCKER_USERNAME" --password-stdin
+    #           docker build -t $IMAGE_NAME .
+    #           docker push $IMAGE_NAME
 
-              # mvn install jib:build \
-              #   -Djib.from.image=openjdk:8 \
-              #   -Djib.to.image=$IMAGE_NAME \
-              #   -Djib.to.auth.username=$ALIYUN_DOCKER_USERNAME \
-              #   -Djib.to.auth.password=$ALIYUN_DOCKER_PASSWORD \
-              #   -pl ladeit-biz -am
+    #           # mvn install jib:build \
+    #           #   -Djib.from.image=openjdk:8 \
+    #           #   -Djib.to.image=$IMAGE_NAME \
+    #           #   -Djib.to.auth.username=$ALIYUN_DOCKER_USERNAME \
+    #           #   -Djib.to.auth.password=$ALIYUN_DOCKER_PASSWORD \
+    #           #   -pl ladeit-biz -am
 
-              curl --url $LADEIT_URL -H "Content-Type: application/json" -X POST \
-                    --data '{"token":"'$L_TOKEN'","serviceName":"ladeit-service","image":"'$IMAGE_NAME'","version":"'$TRAVIS_BUILD_NUMBER'","refs":"'$TRAVIS_BRANCH'", "commitHash":"'$TRAVIS_COMMIT'"}'
-            fi
-          )
-      name: push ladeit image to aliyun
+    #           curl --url $LADEIT_URL -H "Content-Type: application/json" -X POST \
+    #                 --data '{"token":"'$L_TOKEN'","serviceName":"ladeit-service","image":"'$IMAGE_NAME'","version":"'$TRAVIS_BUILD_NUMBER'","refs":"'$TRAVIS_BRANCH'", "commitHash":"'$TRAVIS_COMMIT'"}'
+    #         fi
+    #       )
+    #   name: push ladeit image to aliyun
