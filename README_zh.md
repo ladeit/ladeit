@@ -1,6 +1,8 @@
 [English](./README.md) | [中文](./README_zh.md)
 
 # Ladeit
+[![Build Status](https://travis-ci.com/ladeit/ladeit.svg?branch=master)](https://travis-ci.com/github/ladeit/ladeit)
+![ladeit logo](docs/images/ladeit-logo.svg)
 
 ## Overview
 ladeit 是一个基于 [kubernetes](https://github.com/kubernetes/kubernetes) 的 _CD(Continuous Deployment)_ 工具，可以方便、可追溯的发布服务。
