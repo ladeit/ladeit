@@ -1,4 +1,0 @@
-apiVersion: v1
-description: Ladeit helm chart
-name: ladeit
-version: 0.1.0
