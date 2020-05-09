@@ -38,9 +38,10 @@ public class LanFilter extends BasicHttpAuthenticationFilter {
 		}
 		boolean isSocket = url.contains("/api/v1/terminal/socket");
 		// 匹配url规则，放过不需要验证的请求
-		if ("/api/v1/user".equals(url) || url.contains("swagger") || url.contains("/v2/api-docs") || url.equals(
-				"/api/v1/service/image") || url.contains("/api/v1/slack") || url.contains("/api/v1/event") ||
-				"/actuator/health".equals(url)) {
+		if(!url.startsWith("/api/v1")){
+			return Boolean.TRUE;
+		}
+		if ("/api/v1/user".equals(url) || url.equals("/api/v1/service/image") || url.contains("/api/v1/slack") || url.contains("/api/v1/event")) {
 			return Boolean.TRUE;
 		}
 		// 如果是websocket，放过
