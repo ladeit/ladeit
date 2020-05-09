@@ -2,7 +2,7 @@
 
 # Ladeit
 [![Build Status](https://travis-ci.com/ladeit/ladeit.svg?branch=master)](https://travis-ci.com/github/ladeit/ladeit)
-![ladeit logo](docs/images/ladeit-logo.svg)
+![ladeit logo](https://github.com/ladeit/ladeit.github.io/blob/master/images/ladeit-logo.svg)
 
 ## Overview
 Ladeit is a _CD(Continuous Deployment)_ tool for services deployed on [kubernetes](https://github.com/kubernetes/kubernetes). It makes the deployment convenient and traceable.
