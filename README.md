@@ -2,7 +2,6 @@
 
 # Ladeit
 [![Build Status](https://travis-ci.com/ladeit/ladeit.svg?branch=master)](https://travis-ci.com/github/ladeit/ladeit)
-![Total visitor](https://visitor-badge.glitch.me/badge?page_id=ladeit.ladeit)
 ![ladeit logo](docs/images/ladeit-logo.svg)
 
 ## Overview
@@ -58,3 +57,5 @@ helm install helm/ --set volume.enabled=true --set persistentVolumeClaim.enabled
 `istio` doing， `smi` todo
 -  **topology**
 -  **deploy for thrid party servcie**
+
+![Total visitor](https://visitor-badge.glitch.me/badge?page_id=ladeit.ladeit)
