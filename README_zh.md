@@ -27,22 +27,27 @@ ladeit 是一个基于 [kubernetes](https://github.com/kubernetes/kubernetes) �
 ## Quick start
 ### Installation
 
-##### docker
+#### docker
 ```
 docker run ladeit/ladeit
 ```
-##### helm
-在项目的根目录下运行以下脚本
+#### k8s
+```
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+```
+#### helm
+试用
 ``` 
-helm install helm/
+helm repo add ladeit https://ladeit.github.io/charts
+helm install ladeit/ladeit --version 0.3.3
 ```
 如果你想要在初始化helm的chart的时候，同时创建一个 ingress，你可以像这样运行脚本
 ```
-helm install helm/ --set ingress.enabled=true
+helm install  ladeit/ladeit --version 0.3.3 --set ingress.enabled=true
 ``` 
-我们强烈建议，在生产环境下，为容器提供一个 persistent volume，用来保存数据库的数据。
+我们强烈建议，在生产环境下，为容器提供一个 persistent volume，用来保存持久化数据
 ```
-helm install helm/ --set volume.enabled=true --set persistentVolumeClaim.enabled=true
+helm install  ladeit/ladeit --version 0.3.3 --set volume.enabled=true --set persistentVolumeClaim.enabled=true
 ```
 ### Initialization
 

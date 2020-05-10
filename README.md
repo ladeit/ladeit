@@ -27,22 +27,27 @@ As the containerization and micro-service going on, the operation work are more 
 ## Quick start
 ### Installation
 
-##### docker
+#### docker
 ```
 docker run ladeit/ladeit
 ```
-##### helm
-Run the script in the root directory of the project.
+#### k8s
+```
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+```
+#### helm
+For trial
 ``` 
-helm install helm/
+helm repo add ladeit https://ladeit.github.io/charts
+helm install ladeit/ladeit --version 0.3.3
 ```
-If you would like to create a ingress when init the helm chart,you can run the script like this.
+If you would like to create a ingress when init the helm chart, you can run the script like this
 ```
-helm install helm/ --set ingress.enabled=true
+helm install ladeit/ladeit --version 0.3.3 --set ingress.enabled=true
 ``` 
-We strongly recommend that in a production environment, you should provide a persistent volume for the container to hold the database data.
+We strongly recommend that you provide a persistent volume for the container to save the persistence data in production environment
 ```
-helm install helm/ --set volume.enabled=true --set persistentVolumeClaim.enabled=true
+helm install ladeit/ladeit --version 0.3.3 --set volume.enabled=true --set persistentVolumeClaim.enabled=true
 ```
 ### Initialization
 
