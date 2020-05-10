@@ -1,0 +1,3 @@
+[submodule "ladeit-web"]
+	path = ladeit-web
+	url = https://github.com/ladeit/ladeit-web.git
