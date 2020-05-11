@@ -36,29 +36,35 @@ public class StartServiceImpl implements StartService {
     @Override
     public ExecuteResult<StartParamInfoAO> getStartParam() {
         ExecuteResult<StartParamInfoAO> result = new ExecuteResult<>();
+        StartParamInfoAO startParamInfoAO = new StartParamInfoAO();
         try {
-            InputStream redisinput = new FileInputStream(redisroperties);
-            Properties reproperties = new Properties();
-            reproperties.load(redisinput);
-            RedisInfoAO redisInfoAO = new RedisInfoAO();
-            redisInfoAO.setType(reproperties.getProperty("spring.redis.type"));
-            redisInfoAO.setDatabase(reproperties.getProperty("spring.redis.database"));
-            redisInfoAO.setHost(reproperties.getProperty("spring.redis.host"));
-            redisInfoAO.setPassword(reproperties.getProperty("spring.redis.password"));
-            redisInfoAO.setPort(reproperties.getProperty("spring.redis.port"));
-
-            InputStream mysqlinput = new FileInputStream(mysqlproperties);
-            Properties myproperties = new Properties();
-            myproperties.load(mysqlinput);
-            MysqlInfoAO mysqlInfoAO = new MysqlInfoAO();
-            mysqlInfoAO.setType(myproperties.getProperty("datasource.mysql.type"));
-            mysqlInfoAO.setDriver(myproperties.getProperty("datasource.default.driver"));
-            mysqlInfoAO.setOperflag(true);
-            mysqlInfoAO.setPassword(myproperties.getProperty("datasource.default.password"));
-            mysqlInfoAO.setUrl(myproperties.getProperty("datasource.default.url"));
-            mysqlInfoAO.setUsername(myproperties.getProperty("datasource.default.username"));
-
-
+            File fileredis = new File(redisroperties);
+            if(fileredis.exists()){
+                InputStream redisinput = new FileInputStream(redisroperties);
+                Properties reproperties = new Properties();
+                reproperties.load(redisinput);
+                RedisInfoAO redisInfoAO = new RedisInfoAO();
+                redisInfoAO.setType(reproperties.getProperty("spring.redis.type"));
+                redisInfoAO.setDatabase(reproperties.getProperty("spring.redis.database"));
+                redisInfoAO.setHost(reproperties.getProperty("spring.redis.host"));
+                redisInfoAO.setPassword(reproperties.getProperty("spring.redis.password"));
+                redisInfoAO.setPort(reproperties.getProperty("spring.redis.port"));
+                startParamInfoAO.setRedisInfoAO(redisInfoAO);
+            }
+            File filemysql = new File(mysqlproperties);
+            if(filemysql.exists()){
+                InputStream mysqlinput = new FileInputStream(mysqlproperties);
+                Properties myproperties = new Properties();
+                myproperties.load(mysqlinput);
+                MysqlInfoAO mysqlInfoAO = new MysqlInfoAO();
+                mysqlInfoAO.setType(myproperties.getProperty("datasource.mysql.type"));
+                mysqlInfoAO.setDriver(myproperties.getProperty("datasource.default.driver"));
+                mysqlInfoAO.setOperflag(true);
+                mysqlInfoAO.setPassword(myproperties.getProperty("datasource.default.password"));
+                mysqlInfoAO.setUrl(myproperties.getProperty("datasource.default.url"));
+                mysqlInfoAO.setUsername(myproperties.getProperty("datasource.default.username"));
+                startParamInfoAO.setMysqlInfoAO(mysqlInfoAO);
+            }
             File file = new File(ladeitproperties);
             LadeitInfoAO ladeitInfoAO = new LadeitInfoAO();
             if(file.exists()){
@@ -67,15 +73,9 @@ public class StartServiceImpl implements StartService {
                 ladeitproperties.load(ladeitinput);
                 ladeitInfoAO.setBotmngrhost(ladeitproperties.getProperty("ladeit-bot-notif-mngr.host"));
                 ladeitInfoAO.setLadeithost(ladeitproperties.getProperty("ladeit.host"));
+                startParamInfoAO.setLadeitInfoAO(ladeitInfoAO);
             }
-
-            StartParamInfoAO startParamInfoAO = new StartParamInfoAO();
-            startParamInfoAO.setMysqlInfoAO(mysqlInfoAO);
-            startParamInfoAO.setRedisInfoAO(redisInfoAO);
-            startParamInfoAO.setLadeitInfoAO(ladeitInfoAO);
-
             result.setResult(startParamInfoAO);
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

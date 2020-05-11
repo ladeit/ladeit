@@ -25,28 +25,45 @@ As the containerization and micro-service going on, the operation work are more 
 * service mesh *alpha*
 
 ## Quick start
-### Installation
 
-##### docker
+> Please use admin/admin to login after installation.
+
+### For trial
+
+docker
 ```
-docker run ladeit/ladeit
+docker run -p 8000:8000 ladeit/ladeit
 ```
-##### helm
-Run the script in the root directory of the project.
+k8s
+```
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+```
+helm
 ``` 
-helm install helm/
+helm repo add ladeit https://ladeit.github.io/charts
+helm install ladeit/ladeit --version 0.3.3
 ```
-If you would like to create a ingress when init the helm chart,you can run the script like this.
+
+### For official use
+
+docker
 ```
-helm install helm/ --set ingress.enabled=true
-``` 
-We strongly recommend that in a production environment, you should provide a persistent volume for the container to hold the database data.
+docker run -idt --name ladeit -p 8000:8000 -v PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
-helm install helm/ --set volume.enabled=true --set persistentVolumeClaim.enabled=true
+k8s
+> Please create a `persistent volume` and run: 
 ```
-### Initialization
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+```
+helm
+> Please create a `persistent volume` and run: 
+```
+helm repo add ladeit https://ladeit.github.io/charts
+helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.3
+```
 
 ## Guide
+
 
 ## Screenshot
 ![1](https://www.docker.com/sites/default/files/d8/styles/role_icon/public/2020-01/DesktopAction%402.png?itok=fSjduwO7)
