@@ -25,31 +25,40 @@ As the containerization and micro-service going on, the operation work are more 
 * service mesh *alpha*
 
 ## Quick start
-### Installation
+
+### For trial
 
 #### docker
 ```
-docker run ladeit/ladeit
+docker run -p 8000:8000 ladeit/ladeit
 ```
 #### k8s
 ```
 kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
 ```
 #### helm
-For trial
 ``` 
 helm repo add ladeit https://ladeit.github.io/charts
 helm install ladeit/ladeit --version 0.3.3
 ```
-If you would like to create a ingress when init the helm chart, you can run the script like this
+
+### For official use
+
+#### docker
 ```
-helm install ladeit/ladeit --version 0.3.3 --set ingress.enabled=true
-``` 
-We strongly recommend that you provide a persistent volume for the container to save the persistence data in production environment
+docker run --idt --name ladeit -p 8000:8000 -d PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
-helm install ladeit/ladeit --version 0.3.3 --set volume.enabled=true --set persistentVolumeClaim.enabled=true
+#### k8s
+> Please create a `persistent volume` and run: 
 ```
-### Initialization
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+```
+#### helm
+> Please create a `persistent volume` and run: 
+```
+helm repo add ladeit https://ladeit.github.io/charts
+helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.3
+```
 
 ## Guide
 
