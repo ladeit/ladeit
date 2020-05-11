@@ -46,7 +46,7 @@ helm install ladeit/ladeit --version 0.3.3
 
 #### docker
 ```
-docker run --idt --name ladeit -p 8000:8000 -d PATH_ON_HOST:/root/.ladeit ladeit/ladeit
+docker run -idt --name ladeit -p 8000:8000 -v PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
 #### k8s
 > 请创建 `persistent volume` 后执行: 
