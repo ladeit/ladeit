@@ -101,7 +101,7 @@ public class K8sTerminalSocket {
         Exec exec = new Exec(apiClient);
         try {
             process = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"/bin/bash"} :
-                    commands.toArray(new String[commands.size()]), container, true, true, poolid);
+                    commands. toArray(new String[commands.size()]), container, true, true, poolid);
             // 开启线程接受数据并发送到前台
             this.singleThreadPool = new ThreadPoolExecutor(20, 20,
                     0L, TimeUnit.MILLISECONDS,
