@@ -26,17 +26,19 @@ ladeit 是一个基于 [kubernetes](https://github.com/kubernetes/kubernetes) �
 
 ## Quick start
 
+> 安装完后请使用默认用户 `admin/admin` 登录。
+
 ### 试用
 
-#### docker
+docker
 ```
 docker run -p 8000:8000 ladeit/ladeit
 ```
-#### k8s
+k8s
 ```
 kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
 ```
-#### helm
+helm
 ``` 
 helm repo add ladeit https://ladeit.github.io/charts
 helm install ladeit/ladeit --version 0.3.3
@@ -44,16 +46,16 @@ helm install ladeit/ladeit --version 0.3.3
 
 ### 正式使用
 
-#### docker
+docker
 ```
 docker run -idt --name ladeit -p 8000:8000 -v PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
-#### k8s
+k8s
 > 请创建 `persistent volume` 后执行: 
 ```
 kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
 ```
-#### helm
+helm
 > 请创建 `persistent volume` 后执行: 
 ```
 helm repo add ladeit https://ladeit.github.io/charts
