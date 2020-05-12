@@ -41,7 +41,7 @@ kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-
 helm
 ``` 
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --version 0.3.3
+helm install ladeit/ladeit --version 0.3.6
 ```
 
 ### For official use
@@ -59,7 +59,7 @@ helm
 > Please create a `persistent volume` and run: 
 ```
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.3
+helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.6
 ```
 
 ## Guide
