@@ -14,6 +14,8 @@ import com.ladeit.common.system.Code;
 import com.ladeit.pojo.doo.Cluster;
 import com.ladeit.pojo.doo.Env;
 import com.ladeit.pojo.doo.Service;
+import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.OkHttpClient;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
@@ -77,30 +79,20 @@ public class LogWebSocket {
 		Reader reader = new StringReader(cluster.getK8sKubeconfig());
 		ApiClient apiClient = Config.fromConfig(reader);
 		Configuration.setDefaultApiClient(apiClient);
-		InputStream is = new PodLogs().streamNamespacedPodLog(env.getNamespace(),pod,container);
-		ThreadFactory threadFactory = (ThreadFactory) SpringBean.getBean("threadPoolFactory");
-		OutputStream outputStream = new OutputStream() {
-			@Override
-			public void write(int b) throws IOException {
-				byte[] bb = new byte[4];
-				bb[3] = (byte) (b & 0xff);
-				bb[2] = (byte) ((b >> 8) & 0xff);
-				bb[1] = (byte) ((b >> 16) & 0xff);
-				bb[0] = (byte) ((b >> 24) & 0xff);
-				ByteBuffer bf = ByteBuffer.wrap(bb);
-				sendMessage(bf);
-			}
-		};
-		ThreadPoolExecutor singleThreadPool = new ThreadPoolExecutor(20, 20,
-				0L, TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>(1024), threadFactory, new ThreadPoolExecutor.AbortPolicy());
-		singleThreadPool.execute(() -> {
-			try {
- 				ByteStreams.copy(is, outputStream);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
+		OkHttpClient httpClient = apiClient.getHttpClient();
+		httpClient.setReadTimeout(1800, TimeUnit.SECONDS);
+		httpClient.setWriteTimeout(1800, TimeUnit.SECONDS);
+		ConnectionPool connectionPool = new ConnectionPool(10, 1000 * 60 * 5, TimeUnit.MILLISECONDS);
+		httpClient.setConnectionPool(connectionPool);
+		InputStream is = new PodLogs().streamNamespacedPodLog(env.getNamespace(), pod, container);
+		InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+		// 使用 BufferedReader 进行读取
+		BufferedReader bufferedReader = new BufferedReader(isr);
+		String line = null;
+		while (null != (line = bufferedReader.readLine())) {
+			this.sendMessage(line);
+			this.sendMessage("\r\n");
+		}
 	}
 
 	/**
