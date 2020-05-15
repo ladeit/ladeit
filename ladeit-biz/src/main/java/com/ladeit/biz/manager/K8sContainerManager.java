@@ -1,17 +1,13 @@
 package com.ladeit.biz.manager;
 
-import com.ladeit.common.holder.K8sHolder;
 import com.ladeit.pojo.ao.YamlContentAO;
 import io.kubernetes.client.ApiCallback;
-import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.proto.V1;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public interface K8sContainerManager {

@@ -70,6 +70,29 @@ public class RedisConfig {
 		return template;
 	}
 
+	@Bean(name = "eventPubSubRedisTemplate")
+	public RedisTemplate<String, Object> eventPubSubRedisTemplate(RedisConnectionFactory factory) {
+		RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();
+		template.setConnectionFactory(factory);
+		Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer =
+				new Jackson2JsonRedisSerializer<>(Object.class);
+		ObjectMapper om = new ObjectMapper();
+		om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+		om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+		jackson2JsonRedisSerializer.setObjectMapper(om);
+		StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+		// key采用String的序列化方式
+		template.setKeySerializer(stringRedisSerializer);
+		// hash的key也采用String的序列化方式
+		template.setHashKeySerializer(stringRedisSerializer);
+		// value序列化方式采用jackson
+		template.setValueSerializer(stringRedisSerializer);
+		// hash的value序列化方式采用jackson
+		template.setHashValueSerializer(stringRedisSerializer);
+		template.afterPropertiesSet();
+		return template;
+	}
+
 	@Bean
 	public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,
 												   MessageListenerAdapter listenerAdapter) {

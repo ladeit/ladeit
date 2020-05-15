@@ -2,6 +2,7 @@ package com.ladeit.biz.websocket.events;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
@@ -25,13 +26,15 @@ public class RedisReceiver {
 	}
 
 	public void receiveMessage(String message) {
-//		JSONObject originJson = (JSONObject) ((JSONArray) JSONObject.parse(message)).get(1);
+		String newStr = StringEscapeUtils.unescapeJava(message);
+		JSONObject originJson = (JSONObject) JSONObject.parse(newStr.substring(1,newStr.length()-1));
 //		String startTime = originJson.getString("startTime");
 //		String endTime = originJson.getString("endTime");
 //		originJson.put("startTime", ((JSONArray) JSONObject.parse(startTime)).get(1).toString());
 //		originJson.put("endTime", ((JSONArray) JSONObject.parse(endTime)).get(1).toString());
-//		EventSub eventSub = originJson.toJavaObject(EventSub.class);
-		EventSub eventSub = JSONObject.parseObject(message.substring(1,message.length()-1).replace("\\",""),EventSub.class);
+		EventSub eventSub = originJson.toJavaObject(EventSub.class);
+		//EventSub eventSub = JSONObject.parseObject(message.substring(1,message.length()-1).replace("\\",""),EventSub
+		// .class);
 		this.threadServiceIds.forEach((ews, list) -> {
 			list.stream().filter(id -> id.equals(eventSub.getServiceId())).forEach(id -> {
 				ews.sendMessage(eventSub);

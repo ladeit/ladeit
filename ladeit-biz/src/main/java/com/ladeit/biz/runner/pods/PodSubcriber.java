@@ -140,8 +140,7 @@ public class PodSubcriber {
 								this.api.listNamespacedPodCall(
 										env.getNamespace(), null, null, null, null, null, null, this.rev, null,
 										Boolean.TRUE, null, null),
-								new TypeToken<Watch.Response<V1Pod>>() {
-								}.getType());
+								new TypeToken<Watch.Response<V1Pod>>() {}.getType());
 				while (!stop) {
 					Watch.Response<V1Pod> item = watch.next();
 					if (item != null) {

@@ -27,12 +27,12 @@ public class PodStarter implements CommandLineRunner {
 	private PodHandler podHandler;
 	@Override
 	public void run(String... args) throws Exception {
-		ExecuteResult<List<Env>> envRes = this.envService.getAllEnv();
-		List<Env> envs = envRes.getResult();
-		if (envs != null && !envs.isEmpty()) {
-			for (Env env : envs) {
-				this.podHandler.put(env.getId(),null);
-			}
-		}
+//		ExecuteResult<List<Env>> envRes = this.envService.getAllEnv();
+//		List<Env> envs = envRes.getResult();
+//		if (envs != null && !envs.isEmpty()) {
+//			for (Env env : envs) {
+//				this.podHandler.put(env.getId(),null);
+//			}
+//		}
 	}
 }

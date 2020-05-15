@@ -1,6 +1,5 @@
 package com.ladeit.biz.runner.events;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.reflect.TypeToken;
 import com.ladeit.biz.config.SpringBean;
@@ -25,6 +24,7 @@ import com.squareup.okhttp.OkHttpClient;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
+import io.kubernetes.client.JSON;
 import io.kubernetes.client.apis.AppsV1Api;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.*;
@@ -68,6 +68,7 @@ public class EventsSubcriber {
 	private String rev;
 	private boolean stop;
 	private RedisTemplate<String, Object> redisTemplate;
+	private RedisTemplate<String, Object> pubSubRedisTemplate;
 	private String config;
 	private Message message;
 	private Service service;
@@ -105,6 +106,7 @@ public class EventsSubcriber {
 		this.envService = SpringBean.getObject(EnvService.class);
 		this.clusterService = SpringBean.getObject(ClusterService.class);
 		this.redisTemplate = (RedisTemplate<String, Object>) SpringBean.getBean("eventRedisTemplate");
+		this.pubSubRedisTemplate = (RedisTemplate<String, Object>) SpringBean.getBean("eventPubSubRedisTemplate");
 		this.env = this.envService.getEnvById(this.envId);
 		this.cluster = this.clusterService.getClusterById(env.getClusterId());
 		this.message = new Message();
@@ -163,10 +165,11 @@ public class EventsSubcriber {
 										v1event.getInvolvedObject().getUid(), v1event.getInvolvedObject().getKind());
 								switch (result.getCode()) {
 									case Code.SUCCESS:
-										JSONObject jo = result.getResult().getJSONObject("metadata").getJSONObject(
+										JSONObject jo = result.getResult();
+										JSONObject labels = jo.getJSONObject("metadata").getJSONObject(
 												"labels");
-										if (jo != null) {
-											String serviceId = jo.getString("serviceId");
+										if (labels != null) {
+											String serviceId = labels.getString("serviceId");
 											ExecuteResult<Service> s = serviceService.getById(serviceId);
 											if (s.getResult() == null) {
 												continue;
@@ -174,10 +177,11 @@ public class EventsSubcriber {
 											log.info("verison" + currentRev + ",kind:" + v1event.getInvolvedObject().getKind() + "," + "namespace:" + v1event.getInvolvedObject().getNamespace() + ",name" + v1event.getInvolvedObject().getName() + ", reason:" + v1event.getReason() + ",message" + v1event.getMessage());
 											// 在redis中存储半小时的历史event信息
 											this.redisEventsHistory(event, v1event);
+											// 执行生命周期检测，修改数据库信息
+											Service service = this.releaseLifecycleMonitor(v1event, serviceId, s.getResult(), jo);
+											s.getResult().setStatus(service.getStatus());
 											// redis发布实时信息
 											this.redisEventActual(event, s.getResult());
-											// 执行生命周期检测，修改数据库信息
-											this.releaseLifecycleMonitor(v1event, serviceId, s.getResult());
 										} else {
 											log.error("该资源没有serviceId的lables，可能不受ladeit管控");
 										}
@@ -297,7 +301,8 @@ public class EventsSubcriber {
 	 * @date 20-4-3
 	 * @version 1.0.0
 	 */
-	private void releaseLifecycleMonitor(V1Event event, String serviceId, Service s) throws ApiException, IOException {
+	private Service releaseLifecycleMonitor(V1Event event, String serviceId, Service s, JSONObject jo) throws ApiException, IOException {
+		Service result = new Service();
 		// warning类型的视作服务存在问题，同步更新service状态
 		ResourceService resourceService = SpringBean.getObject(ResourceService.class);
 		if ("Warning".equals(event.getType())) {
@@ -306,7 +311,7 @@ public class EventsSubcriber {
 			ExecuteResult<JSONObject> ownerRes = resourceService.getResourceByUid(config, uid, kind);
 			if (ownerRes.getCode() != Code.SUCCESS) {
 				log.info("未找到资源:" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid());
-				return;
+				return result;
 			}
 			JSONObject owner = ownerRes.getResult();
 			JSONObject status = owner.getJSONObject("status");
@@ -316,16 +321,32 @@ public class EventsSubcriber {
 			} else if ("Pod".equals(kind)) {
 				// 如果pod出现异常，一般是replicaset已经成功扩展出了新的pod，但是pod启动异常，此时服务未达到希望达到的运行数量，系统认为是异常状态。
 				this.warningBussiness(event, serviceId, s);
+				result.setStatus("8");
 			} else if (("ReplicaSet".equals(kind) || "Deployment".equals(kind)) && (status.getInteger("replicas") != null && !status.getInteger(
 					"readyReplicas").equals(desireReplicas))) {
 				// 如果replicaset或者deployment发生异常event，而且他们的希望值和准备好值不相等，被认为是没有达到希望的运行数量，系统认为是异常状态
 				this.warningBussiness(event, serviceId, s);
+				result.setStatus("8");
 			} else {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
 						"readyReplicas"));
 			}
+		} else if ("Normal".equals(event.getType())) {
+			String kind = event.getInvolvedObject().getKind();
+			if ("Pod".equals(kind)) {
+				this.releaseLifecycleMonitor(jo);
+				result.setStatus("0");
+			} else if ("ReplicaSet".equals(kind) || "Deployment".equals(kind)) {
+				Integer replicas = jo.getJSONObject("spec").getInteger("replicas");
+				Integer readyReplicas = jo.getJSONObject("status").getInteger("readyReplicas");
+				if (replicas != null && replicas.equals(readyReplicas)) {
+					this.updateService(serviceId, "0");
+					result.setStatus("0");
+				}
+			}
 		}
+		return result;
 	}
 
 	private void updateService(String serviceId, String status) {
@@ -357,5 +378,462 @@ public class EventsSubcriber {
 		messageService.insertMessage(message, false);
 		messageService.insertSlackMessage(message);
 		this.updateService(serviceId, "8");
+	}
+
+	/**
+	 * release生命周期监控，修改service，release，candidate状态
+	 *
+	 * @param v1pod
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-4-3
+	 * @version 1.0.0
+	 */
+	private void releaseLifecycleMonitor(JSONObject v1pod) throws IOException {
+		// deployment滚动发布完成
+		ResourceService resourceService = SpringBean.getObject(ResourceService.class);
+		String serviceId = (String) v1pod.getJSONObject("metadata").getJSONObject("labels").get("serviceId");
+		String releaseId = (String) v1pod.getJSONObject("metadata").getJSONObject("labels").get("releaseId");
+		for (Object o : v1pod.getJSONObject("metadata").getJSONArray("ownerReferences")) {
+			JSONObject v1OwnerReference = (JSONObject) o;
+			String ownerReferenceKind = v1OwnerReference.getString("kind");
+			String ownerReferenceUid = v1OwnerReference.getString("uid");
+			ExecuteResult<JSONObject> ownerRes = resourceService.getResourceByUid(config, ownerReferenceUid,
+					ownerReferenceKind);
+			JSONObject owner = ownerRes.getResult();
+			if (owner.getJSONObject("status").getInteger("replicas") != null && owner.getJSONObject("status").getInteger("replicas").equals(0)) {
+				this.updateService(serviceId, "0");
+			} else {
+				Integer readyReplicas = owner.getJSONObject("status").getInteger("readyReplicas");
+				Integer replicas = owner.getJSONObject("status").getInteger("replicas");
+				if (readyReplicas != null && replicas != null && readyReplicas.equals(replicas)) {
+					int[] type = {4, 8, 10, 11};
+					boolean update = false;
+					for (int t : type) {
+						CandidateDto candidatedto =
+								(CandidateDto) redisTemplate.opsForSet().pop("candidateCache:" + serviceId + "," + releaseId + "," + t);
+						if (candidatedto != null) {
+							this.deploymentFinishBusiness(candidatedto, serviceId, releaseId);
+							update = true;
+						}
+					}
+					if (!update) {
+						this.updateService(serviceId, "0");
+					}
+				}
+			}
+		}
+	}
+
+	@Transactional
+	public void deploymentFinishBusiness(CandidateDto candidatedto, String serviceId, String releaseId) throws IOException {
+		CandidateService candidateService = SpringBean.getObject(CandidateService.class);
+		ServiceService serviceService = SpringBean.getObject(ServiceService.class);
+		ReleaseService releaseService = SpringBean.getObject(ReleaseService.class);
+		IstioManager istioManager = SpringBean.getObject(IstioManager.class);
+		MessageService messageService = SpringBean.getObject(MessageService.class);
+		ServiceGroupService serviceGroupService = SpringBean.getObject(ServiceGroupService.class);
+		UserService userService = SpringBean.getObject(UserService.class);
+		ImageDao imageDao = SpringBean.getObject(ImageDao.class);
+		ReleaseDao releaseDao = SpringBean.getObject(ReleaseDao.class);
+		TopologyAO topology = candidatedto.getTopologyAO();
+		ExecuteResult<Service> service = serviceService.getById(candidatedto.getServiceId());
+		if (service.getResult() == null) {
+			// service可能已经被删除了，完成后删除redis信息
+			redisTemplate.opsForSet().remove("candidateCache:" + serviceId + "," + releaseId);
+			return;
+		}
+		ExecuteResult<ServiceGroup> sgr =
+				serviceGroupService.getGroupById(service.getResult().getServiceGroupId());
+		ServiceGroup sg = sgr.getResult();
+		if (candidatedto.getType() == 4) {
+			// AB测试
+			// pod已经ready了，开始逻辑,否则不做处理
+			ExecuteResult<Candidate> candidateInUseRes =
+					candidateService.getInUseCandidateByServiceId(candidatedto.getServiceId());
+			Candidate candidateInUse = candidateInUseRes.getResult();
+			candidateInUse.setStatus(1);
+			// 老的候选下线
+			candidateService.updateStatus(candidateInUse);
+			Candidate candidateNew = new Candidate();
+			candidateNew.setId(candidatedto.getCandidateId());
+			candidateNew.setStatus(0);
+			// 新的候选上线
+			candidateService.updateStatus(candidateNew);
+			candidateNew = null;
+			// service状态改变
+			Service s = new Service();
+			s.setId(service.getResult().getId());
+			s.setStatus("0");
+			serviceService.updateStatusById(s);
+			s = null;
+			// 修改release状态
+			Release r1 = new Release();
+			ExecuteResult<Release> releaseInUse =
+					releaseService.getInUseReleaseByServiceId(service.getResult().getId());
+			r1.setId(releaseInUse.getResult().getId());
+			Date now = new Date();
+			long start = releaseInUse.getResult().getServiceStartAt().getTime();
+			long end = now.getTime();
+			r1.setDuration(end - start);
+			r1.setServiceFinishAt(now);
+			r1.setStatus(2);
+			releaseService.updateStatus(r1);
+			r1 = null;
+			Release r2 = new Release();
+			r2.setId(candidatedto.getReleaseId());
+			r2.setDeployFinishAt(now);
+			r2.setServiceStartAt(now);
+			r2.setStatus(1);
+			releaseService.updateStatus(r2);
+			r2 = null;
+			// 解析拓扑图
+			// virtualservice
+			VirtualService virtualService =
+					istioManager.getVirtualservice(cluster.getK8sKubeconfig(),
+							"virtualservice-" + service.getResult().getName(),
+							env.getNamespace());
+			virtualService.getSpec().setHosts(topology.getHost());
+			List<HTTPRoute> httpRoutes = new ArrayList<>();
+			List<HTTPRouteDestination> httpRouteDestinationsAll = new ArrayList<>();
+			for (Match match : topology.getMatch()) {
+				HTTPRoute httpRoute = new HTTPRoute();
+				List<HTTPMatchRequest> httpMatchRequests = new ArrayList<>();
+				List<HTTPRouteDestination> httpRouteDestinations = new ArrayList<>();
+				httpRoute.setRoute(httpRouteDestinations);
+				if (match.getRule() == null || match.getRule().size() == 0) {
+					// 有任何匹配条件，默认路由
+					topology.getMap().forEach(map -> {
+						if (map.getMatchId().equals(match.getId())) {
+							HTTPRouteDestination httpRouteDestination =
+									new HTTPRouteDestination();
+							Destination destination = new Destination();
+							topology.getRoute().forEach(route -> {
+								if (map.getRouteId().equals(route.getId())) {
+									destination.setSubset(route.getSubset());
+									destination.setHost(service.getResult().getName());
+								}
+							});
+							httpRouteDestination.setDestination(destination);
+							httpRouteDestination.setWeight(map.getWeight());
+							httpRouteDestinations.add(httpRouteDestination);
+							httpRouteDestinationsAll.addAll(httpRouteDestinations);
+						}
+					});
+				} else {
+					// 有匹配条件的路由
+					for (Rule rule : match.getRule()) {
+						HTTPMatchRequest httpMatchRequest = new HTTPMatchRequest();
+						Map<String, StringMatch> stringStringMatchMap = new HashMap<>();
+						rule.getStringMatch().forEach(myStringMatch -> {
+							if ("Authority".equals(myStringMatch.getType())) {
+								if ("exact".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									ExactMatchType matchType = new ExactMatchType();
+									matchType.setExact(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setAuthority(stringMatch);
+								} else if ("prefix".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									PrefixMatchType matchType = new PrefixMatchType();
+									matchType.setPrefix(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setAuthority(stringMatch);
+								} else if ("regex".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									RegexMatchType matchType = new RegexMatchType();
+									matchType.setRegex(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setAuthority(stringMatch);
+								}
+							} else if ("method".equals(myStringMatch.getType())) {
+								if ("exact".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									ExactMatchType matchType = new ExactMatchType();
+									matchType.setExact(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setMethod(stringMatch);
+								} else if ("prefix".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									PrefixMatchType matchType = new PrefixMatchType();
+									matchType.setPrefix(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setMethod(stringMatch);
+								} else if ("regex".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									RegexMatchType matchType = new RegexMatchType();
+									matchType.setRegex(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setMethod(stringMatch);
+								}
+							} else if ("scheme".equals(myStringMatch.getType())) {
+								if ("exact".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									ExactMatchType matchType = new ExactMatchType();
+									matchType.setExact(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setScheme(stringMatch);
+								} else if ("prefix".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									PrefixMatchType matchType = new PrefixMatchType();
+									matchType.setPrefix(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setScheme(stringMatch);
+								} else if ("regex".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									RegexMatchType matchType = new RegexMatchType();
+									matchType.setRegex(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setScheme(stringMatch);
+								}
+							} else if ("uri".equals(myStringMatch.getType())) {
+								if ("exact".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									ExactMatchType matchType = new ExactMatchType();
+									matchType.setExact(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setUri(stringMatch);
+								} else if ("prefix".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									PrefixMatchType matchType = new PrefixMatchType();
+									matchType.setPrefix(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setUri(stringMatch);
+								} else if ("regex".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									RegexMatchType matchType = new RegexMatchType();
+									matchType.setRegex(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									httpMatchRequest.setUri(stringMatch);
+								}
+							} else if ("headers".equals(myStringMatch.getType())) {
+								if ("exact".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									ExactMatchType matchType = new ExactMatchType();
+									matchType.setExact(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									stringStringMatchMap.put(myStringMatch.getKey(),
+											stringMatch);
+									httpMatchRequest.setHeaders(stringStringMatchMap);
+								} else if ("prefix".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									PrefixMatchType matchType = new PrefixMatchType();
+									matchType.setPrefix(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									stringStringMatchMap.put(myStringMatch.getKey(),
+											stringMatch);
+									httpMatchRequest.setHeaders(stringStringMatchMap);
+								} else if ("regex".equals(myStringMatch.getExpression())) {
+									StringMatch stringMatch = new StringMatch();
+									RegexMatchType matchType = new RegexMatchType();
+									matchType.setRegex(myStringMatch.getValue());
+									stringMatch.setMatchType(matchType);
+									stringStringMatchMap.put(myStringMatch.getKey(),
+											stringMatch);
+									httpMatchRequest.setHeaders(stringStringMatchMap);
+								}
+							}
+
+						});
+						topology.getMap().forEach(map -> {
+							if (map.getMatchId().equals(match.getId())) {
+								HTTPRouteDestination httpRouteDestination =
+										new HTTPRouteDestination();
+								Destination destination = new Destination();
+								topology.getRoute().forEach(route -> {
+									if (map.getRouteId().equals(route.getId())) {
+										destination.setSubset(route.getSubset());
+										destination.setHost(service.getResult().getName());
+									}
+								});
+								httpRouteDestination.setDestination(destination);
+								httpRouteDestination.setWeight(map.getWeight());
+								httpRouteDestinations.add(httpRouteDestination);
+								httpRouteDestinationsAll.addAll(httpRouteDestinations);
+							}
+						});
+						httpMatchRequests.add(httpMatchRequest);
+					}
+				}
+				httpRoutes.add(httpRoute);
+			}
+			httpRouteDestinationsAll.stream().forEach(httpRouteDestination -> {
+				List<Release> releases =
+						releaseService.getReleaseList(service.getResult().getId());
+				releases.forEach(releaseInner -> {
+					String version = httpRouteDestination.getDestination().getSubset();
+					ExecuteResult<Candidate> candidateRes =
+							candidateService.getByReleaseIdAndName(releaseInner.getId(),
+									httpRouteDestination.getDestination().getSubset());
+					Candidate candidateInner = candidateRes.getResult();
+					if (candidateInner != null) {
+						candidateService.updateWeight(candidateInner.getId(),
+								httpRouteDestination.getWeight());
+					}
+				});
+			});
+			virtualService.getSpec().setHttp(httpRoutes);
+			VirtualService virtualServiceRes =
+					istioManager.createVirtualServices(cluster.getK8sKubeconfig(),
+							virtualService);
+			// destinationrule
+			DestinationRule destinationRule =
+					istioManager.getDestinationrules(cluster.getK8sKubeconfig()
+							, "dest-" + service.getResult().getName(), env.getNamespace());
+			List<Subset> subsets = topology.getRoute().stream().map(route -> {
+				Subset subset = new Subset();
+				subset.setName(route.getSubset());
+				if (route.getLabels() == null) {
+					Map<String, String> labels = new HashMap<>();
+					labels.put("version", candidatedto.getVersion());
+					subset.setLabels(labels);
+				} else {
+					subset.setLabels(route.getLabels());
+				}
+				return subset;
+			}).collect(Collectors.toList());
+			destinationRule.getSpec().setHost(topology.getRoute().get(0).getHost());
+			destinationRule.getSpec().setSubsets(subsets);
+			istioManager.createDestinationrules(cluster.getK8sKubeconfig(), destinationRule);
+		} else if (candidatedto.getType() == 8) {
+			// 滚动发布
+			// pod已经ready了，开始逻辑,否则不做处理
+			// 获取现在的候选
+			Candidate candidateNew = new Candidate();
+			candidateNew.setId(candidatedto.getCandidateId());
+			candidateNew.setStatus(0);
+			candidateNew.setReleaseId(candidatedto.getReleaseId());
+			candidateNew.setImageId(candidatedto.getImageId());
+			candidateNew.setName(candidatedto.getVersion());
+			// 新的候选上线
+			candidateService.update(candidateNew);
+			candidateNew = null;
+			// service状态改变
+			Service s = new Service();
+			s.setId(service.getResult().getId());
+			s.setStatus("0");
+			serviceService.updateStatusById(s);
+			s = null;
+			// 修改release状态
+
+			ExecuteResult<Release> releaseInUse =
+					releaseService.getInUseReleaseByServiceId(service.getResult().getId());
+			if (releaseInUse.getResult() == null) {
+				// 如果获取不到正在使用的release，表示这是首次发布，采用一下逻辑
+				Release r1 = new Release();
+				r1.setId(candidatedto.getReleaseId());
+				r1.setStatus(1);
+				releaseService.updateStatus(r1);
+
+			} else {
+				// 如果能查到正在使用的release，表示这不是首次发布，采用一下逻辑
+				Release r1 = new Release();
+				r1.setId(releaseInUse.getResult().getId());
+				Date now = new Date();
+				long start = releaseInUse.getResult().getServiceStartAt().getTime();
+				long end = now.getTime();
+				r1.setDuration(end - start);
+				r1.setServiceFinishAt(now);
+				r1.setStatus(2);
+				releaseService.updateStatus(r1);
+				r1 = null;
+				Release r2 = new Release();
+				r2.setId(candidatedto.getReleaseId());
+				r2.setDeployFinishAt(now);
+				r2.setServiceStartAt(now);
+				r2.setStatus(1);
+				releaseService.updateStatus(r2);
+				r2 = null;
+			}
+			// 解析拓扑图
+			// virtualservice
+			VirtualService virtualService =
+					istioManager.getVirtualservice(cluster.getK8sKubeconfig(),
+							"virtualservice-" + service.getResult().getName(),
+							env.getNamespace());
+			for (HTTPRoute httpRoute : virtualService.getSpec().getHttp()) {
+				for (HTTPRouteDestination httpRouteDestination : httpRoute.getRoute()) {
+					httpRouteDestination.getDestination().setSubset(candidatedto.getVersion());
+				}
+			}
+			VirtualService virtualServiceRes =
+					istioManager.createVirtualServices(cluster.getK8sKubeconfig(),
+							virtualService);
+			// destinationrule
+			DestinationRule destinationRule =
+					istioManager.getDestinationrules(cluster.getK8sKubeconfig()
+							, "dest-" + service.getResult().getName(), env.getNamespace());
+			destinationRule.getSpec().getSubsets().stream().forEach(subset -> {
+				subset.setName(candidatedto.getVersion());
+				Map<String, String> subsetversion = new HashMap<>();
+				subsetversion.put("version", candidatedto.getVersion());
+				subset.setLabels(subsetversion);
+
+			});
+			istioManager.createDestinationrules(cluster.getK8sKubeconfig(), destinationRule);
+		} else if (candidatedto.getType() == 10) {
+			// 首次发布和后续发布
+			Message message = new Message();
+			message.setId(UUID.randomUUID().toString());
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			message.setCreateAt(new Date());
+			// deploy successfully.
+			message.setContent(sg.getName() + "/" + service.getResult().getName() + " deployed successfully.");
+			message.setLevel("NORMAL");
+
+			message.setServiceGroupId(service.getResult().getServiceGroupId());
+			message.setServiceId(service.getResult().getId());
+			message.setTargetId(candidatedto.getReleaseId());
+			// deploy successfully.
+			message.setTitle(sg.getName() + "/" + service.getResult().getName() + " deployed successfully.");
+			message.setType(CommonConsant.MESSAGE_TYPE_2);
+			message.setMessageType(CommonConsant.MESSAGE_TYPE_S);
+			if (candidatedto.getAuto() != null && candidatedto.getAuto()) {
+				User user = userService.getUserByUsername("bot");
+				message.setOperuserId(user.getId());
+			} else {
+				message.setOperuserId(service.getResult().getCreateById());
+			}
+			Release release = releaseDao.getInUseReleaseByReleaseId(candidatedto.getReleaseId());
+			if (release != null) {
+				String imageId = release.getImageId();
+				Image image = imageDao.getImageById(imageId);
+				Map<String, Object> param = new HashMap<>();
+				if (image != null) {
+					param.put("imageVersioin", image.getVersion());
+				}
+				param.put("releaseName", release.getName());
+				param.put("operChannel", release.getOperChannel());
+				message.setParams(param);
+			}
+			messageService.insertMessage(message, false);
+			messageService.insertSlackMessage(message);
+			message = null;
+		} else if (candidatedto.getType() == 11) {
+			// scale
+			Message message = new Message();
+			message.setId(UUID.randomUUID().toString());
+			message.setCreateAt(new Date());
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String time = sdf.format(new Date());
+			message.setCreateAt(new Date());
+			// sg.getName() + "/" + service.getResult().getName() + " pod " +
+			//		" scaling successfully. From" + candidatedto.getScaleCount()[0] + " to " + candidatedto
+			// .getScaleCount()[1]
+			message.setContent(sg.getName() + "/" + service.getResult().getName() + " pod scaled successfully. From " +
+					candidatedto.getScaleCount()[0] + " to " + candidatedto.getScaleCount()[1]);
+			message.setLevel("NORMAL");
+			message.setOperuserId(service.getResult().getCreateById());
+			message.setServiceGroupId(service.getResult().getServiceGroupId());
+			message.setServiceId(service.getResult().getId());
+			message.setTargetId(service.getResult().getId());
+			// sg.getName() + "/" + service.getResult().getName() + " pod scaling successfully."
+			message.setTitle(sg.getName() + "/" + service.getResult().getName() + " pod scaled successfully.");
+			message.setType(CommonConsant.MESSAGE_TYPE_9);
+			message.setMessageType(CommonConsant.MESSAGE_TYPE_S);
+			messageService.insertMessage(message, false);
+			messageService.insertSlackMessage(message);
+			message = null;
+		}
 	}
 }
