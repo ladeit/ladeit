@@ -1296,7 +1296,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 */
 	@Override
 	public void restart(String config, String serviceId) throws ApiException {
-		AppsV1Api appsV1Api = (AppsV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		AppsV1Api appsV1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 		appsV1Api.listDeploymentForAllNamespaces(null, null, null, "serviceId=" + serviceId, null, null, null, null, null).getItems().stream().forEach(deployment -> {
 			int count = deployment.getSpec().getReplicas();
 			try {
