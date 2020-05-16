@@ -158,7 +158,7 @@ public class UserController {
 	 * @date 20-5-16
 	 * @version 1.0.0
 	 */
-	@PutMapping("")
+	@PutMapping("/password")
 	public ExecuteResult<String> updatePassword(@RequestBody UserAO userAO) throws NoSuchAlgorithmException {
 		User user = new User();
 		BeanUtils.copyProperties(userAO, user);
