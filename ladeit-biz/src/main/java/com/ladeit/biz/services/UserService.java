@@ -42,6 +42,7 @@ public interface UserService {
 
 	/**
 	 * 查询当前登录人活动列表
+	 *
 	 * @param currentPage, pageSize
 	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.OperationAO>>
 	 * @date 2019/11/29
@@ -51,6 +52,7 @@ public interface UserService {
 
 	/**
 	 * 更新用户信息
+	 *
 	 * @param userAO
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2019/12/5
@@ -60,6 +62,7 @@ public interface UserService {
 
 	/**
 	 * 获取用户信息
+	 *
 	 * @param userName
 	 * @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.ao.UserAO>
 	 * @date 2020/3/12
@@ -70,6 +73,7 @@ public interface UserService {
 
 	/**
 	 * 删除用户信息
+	 *
 	 * @param userAO
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2019/12/5
@@ -79,6 +83,7 @@ public interface UserService {
 
 	/**
 	 * 查询ladeit账户绑定的slack账户信息
+	 *
 	 * @param userId
 	 * @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.ao.UserSlackRelationAO>
 	 * @date 2020/1/14
@@ -89,6 +94,7 @@ public interface UserService {
 
 	/**
 	 * 解绑slack用户和ladeit
+	 *
 	 * @param userSlackRelationId
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2020/1/14
@@ -97,12 +103,24 @@ public interface UserService {
 	ExecuteResult<String> unbindSlackUser(String userSlackRelationId);
 
 	/**
-	* 通过用户Id查询用户
-	* @author falcomlife
-	* @date 20-4-17
-	* @version 1.0.0
-	* @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.doo.User>
-	* @param userid
-	*/
+	 * 通过用户Id查询用户
+	 *
+	 * @param userid
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.doo.User>
+	 * @author falcomlife
+	 * @date 20-4-17
+	 * @version 1.0.0
+	 */
 	ExecuteResult<User> getUserBySlackId(String userid);
+
+	/**
+	 * 修改密码
+	 *
+	 * @param user
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	ExecuteResult<String> updatePassword(User user, String newPassword) throws NoSuchAlgorithmException;
 }

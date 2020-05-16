@@ -529,4 +529,24 @@ public class ServiceServiceImpl implements ServiceService {
 		result.setResult(list);
 		return result;
 	}
+
+	/**
+	 * 重启服务
+	 *
+	 * @param serviceId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> restart(String serviceId) throws ApiException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		Env env = this.envService.getEnvById(this.serviceDao.getById(serviceId).getEnvId());
+		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
+		this.k8sWorkLoadsManager.restart(cluster.getK8sKubeconfig(), serviceId);
+		return result;
+	}
+	
+	
 }

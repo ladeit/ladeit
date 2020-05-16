@@ -252,4 +252,14 @@ public interface ResourceService {
 	 * @version 1.0.0
 	 */
 	String getConfigByServiceId(String id);
+
+	/**
+	* 获取服务下所有的yaml
+	* @author falcomlife
+	* @date 20-5-16
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param serviceId
+	*/
+	ExecuteResult<String> getAllYamlInService(String serviceId) throws IOException;
 }

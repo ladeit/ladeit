@@ -15,6 +15,7 @@ import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.*;
 import io.kubernetes.client.models.*;
+import io.kubernetes.client.proto.V1;
 import io.kubernetes.client.util.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 *
 	 * @param labelSelector
 	 * @param config
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Pod>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1Pod>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -105,7 +106,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 查询cronjob
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1beta1CronJob>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1beta1CronJob>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -142,7 +143,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 查询V1ReplicationController
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1ReplicationController>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1ReplicationController>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -180,7 +181,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取DaemonSet
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1DaemonSet>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1DaemonSet>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -214,7 +215,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取Deployment
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Deployment>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1Deployment>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -248,7 +249,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取Job
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Job>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1Job>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -282,7 +283,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取StatefulSet
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kub`ernetes.client.models.V1StatefulSet>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kub                                                                                                                                                                                                                                                               `                                                                                                                                                                                                                                                               ernetes.client.models.V1StatefulSet>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -316,7 +317,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取service
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1Service>>
 	 * @author falcomlife
 	 * @date 19-12-4
 	 * @version 1.0.0
@@ -350,7 +351,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取ingress
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1beta1Ingress>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1beta1Ingress>>
 	 * @author falcomlife
 	 * @date 19-12-4
 	 * @version 1.0.0
@@ -384,7 +385,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取configmap
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1Service>>
 	 * @author falcomlife
 	 * @date 19-12-9
 	 * @version 1.0.0
@@ -418,7 +419,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 * 获取pvc
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1PersistentVolumeClaim>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               io.kubernetes.client.models.V1PersistentVolumeClaim>>
 	 * @author falcomlife
 	 * @date 19-12-9
 	 * @version 1.0.0
@@ -734,7 +735,7 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	 */
 	@Override
 	public V1Scale scaleReplicationControllers(String config, String namespace, String name,
-											V1ReplicationController replicationControllers) throws ApiException {
+											   V1ReplicationController replicationControllers) throws ApiException {
 		CoreV1Api coreV1Api = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		ArrayList<JsonObject> arr = new ArrayList<>();
 		String jsonStr =
@@ -1282,5 +1283,41 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 			});
 		});
 		return result;
+	}
+
+	/**
+	 * 重启服务
+	 *
+	 * @param serviceId
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@Override
+	public void restart(String config, String serviceId) throws ApiException {
+		AppsV1Api appsV1Api = (AppsV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		appsV1Api.listDeploymentForAllNamespaces(null, null, null, "serviceId=" + serviceId, null, null, null, null, null).getItems().stream().forEach(deployment -> {
+			int count = deployment.getSpec().getReplicas();
+			try {
+				deployment.getSpec().setReplicas(0);
+				this.scaleDeployment(config, deployment.getMetadata().getNamespace(), deployment.getMetadata().getName(), deployment);
+				deployment.getSpec().setReplicas(count);
+				this.scaleDeployment(config, deployment.getMetadata().getNamespace(), deployment.getMetadata().getName(), deployment);
+			} catch (ApiException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
+		});
+		appsV1Api.listStatefulSetForAllNamespaces(null, null, null, "serviceId=" + serviceId, null, null, null, null, null).getItems().stream().forEach(deployment -> {
+			int count = deployment.getSpec().getReplicas();
+			try {
+				deployment.getSpec().setReplicas(0);
+				this.scaleStatefulSet(config, deployment.getMetadata().getNamespace(), deployment.getMetadata().getName(), deployment);
+				deployment.getSpec().setReplicas(count);
+				this.scaleStatefulSet(config, deployment.getMetadata().getNamespace(), deployment.getMetadata().getName(), deployment);
+			} catch (ApiException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
+		});
 	}
 }

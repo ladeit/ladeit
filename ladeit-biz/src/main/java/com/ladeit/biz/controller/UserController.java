@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.PUT;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,9 +122,9 @@ public class UserController {
 			userInfo.setSession(subject.getSession().getId().toString());
 
 		} catch (UnknownAccountException e) {
-			if("en-US".equals(lan)){
+			if ("en-US".equals(lan)) {
 				result.addWarningMessage("Invalid username or password");
-			}else{
+			} else {
 				result.addWarningMessage("用户名或密码错误");
 			}
 			result.setCode(Code.NOUSER_FAILPASSWORD);
@@ -137,15 +138,31 @@ public class UserController {
 	 * 查询当前登录人活动列表
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager   <   com.ladeit.pojo.ao.OperationAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.OperationAO>>
 	 * @date 2019/11/29
 	 * @ahthor MddandPyy
 	 */
 	@GetMapping("/getOperations")
 	public ExecuteResult<Pager<OperationAO>> queryOperationList(@RequestParam("currentPage") int currentPage,
 																@RequestParam("pageSize") int pageSize, @RequestParam(
-																		"UserName") String userName) {
+			"UserName") String userName) {
 		return userService.queryOperationList(currentPage, pageSize, userName);
+	}
+
+	/**
+	 * 更新密码
+	 *
+	 * @param userAO
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@PutMapping("")
+	public ExecuteResult<String> updatePassword(@RequestBody UserAO userAO) throws NoSuchAlgorithmException {
+		User user = new User();
+		BeanUtils.copyProperties(userAO, user);
+		return userService.updatePassword(user, userAO.getNewPassword());
 	}
 
 	/**

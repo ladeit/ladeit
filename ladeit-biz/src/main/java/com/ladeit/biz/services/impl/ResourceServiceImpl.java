@@ -398,7 +398,7 @@ public class ResourceServiceImpl implements ResourceService {
 	 * 查询service包含的各个状态的pod的数量
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.Map   <   java.lang.Integer>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.Map<java.lang.Integer>>
 	 * @author falcomlife
 	 * @date 19-12-20
 	 * @version 1.0.0
@@ -1311,7 +1311,7 @@ public class ResourceServiceImpl implements ResourceService {
 	 * 查询wordloads
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.WorkLoadAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.WorkLoadAO>>
 	 * @author falcomlife
 	 * @date 19-12-7
 	 * @version 1.0.0
@@ -1427,7 +1427,7 @@ public class ResourceServiceImpl implements ResourceService {
 	 * 查询service
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.ServiceIngressAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ServiceIngressAO>>
 	 * @author falcomlife
 	 * @date 19-12-7
 	 * @version 1.0.0
@@ -1483,7 +1483,7 @@ public class ResourceServiceImpl implements ResourceService {
 	 * 查询分类组件
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.TypesResourceAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.TypesResourceAO>>
 	 * @author falcomlife
 	 * @date 19-12-7
 	 * @version 1.0.0
@@ -1511,7 +1511,7 @@ public class ResourceServiceImpl implements ResourceService {
 	 * 查询分类组件
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.TypesResourceAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.TypesResourceAO>>
 	 * @author falcomlife
 	 * @date 19-12-7
 	 * @version 1.0.0
@@ -1930,5 +1930,44 @@ public class ResourceServiceImpl implements ResourceService {
 		Env env = this.envService.getEnvById(this.serviceService.getById(id).getResult().getEnvId());
 		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
 		return cluster.getK8sKubeconfig();
+	}
+
+	/**
+	 * 获取服务下所有的yaml
+	 *
+	 * @param serviceId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> getAllYamlInService(String serviceId) throws IOException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		StringBuffer yaml = new StringBuffer();
+		boolean have = false;
+		Env env = this.envService.getEnvById(this.serviceService.getById(serviceId).getResult().getEnvId());
+		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
+		ExecuteResult<Release> releaseRes = this.releaseService.getInUseReleaseByServiceId(serviceId);
+		Release release = releaseRes.getResult();
+		List<Object> objects = this.k8sWorkLoadsManager.getAll(cluster.getK8sKubeconfig(), null);
+		for (Object o : objects) {
+			JSONObject jo = JSON.parseObject(new io.kubernetes.client.JSON().serialize(o));
+			if (!jo.getJSONArray("items").isEmpty()) {
+				jo.getJSONArray("items").stream().forEach(i -> {
+					JSONObject joo = JSON.parseObject(JSON.toJSONString(i));
+					if(joo.getJSONObject("metadata").getJSONObject("labels")!=null){
+						String id = joo.getJSONObject("metadata").getJSONObject("labels").getString("releaseId");
+						if (release.getId().equals(id)) {
+							yaml.append("---\n").append(Yaml.dump(i));
+						}
+					}
+				});
+			}
+		}
+		if (yaml.length() != 0) {
+			result.setResult(yaml.substring(4, yaml.length()));
+		}
+		return result;
 	}
 }

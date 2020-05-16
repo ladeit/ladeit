@@ -46,6 +46,12 @@ public class UserAO {
 	private String password;
 
 	/**
+	 * 用户新密码
+	 */
+	// @JsonInclude(JsonInclude.Include.NON_NULL)
+	private String newPassword;
+
+	/**
 	 * 密码盐
 	 */
 	// @JsonInclude(JsonInclude.Include.NON_NULL)

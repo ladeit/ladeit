@@ -156,5 +156,24 @@ public interface ServiceService {
 	*/
 	ExecuteResult<List<Service>> getService(String status);
 
+	/**
+	 * 查询用户可以访问的所有存在的服务Id
+	 *
+	 * @param userId
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<java.lang.String>>
+	 * @author falcomlife
+	 * @date 20-4-28
+	 * @version 1.0.0
+	 */
 	ExecuteResult<List<String>> getServiceBelongUser(String userId);
+
+	/**
+	* 重启服务
+	* @author falcomlife
+	* @date 20-5-16
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param serviceId
+	*/
+	ExecuteResult<String> restart(String serviceId) throws ApiException;
 }

@@ -240,4 +240,17 @@ public class ResourceController {
 			ApiException {
 		return this.resourceService.getConfiguration(serviceId);
 	}
+
+	/**
+	* 获取服务下面所有的yaml
+	* @author falcomlife
+	* @date 20-5-16
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param serviceId
+	*/
+	@GetMapping("/{serviceId}/yaml")
+	public ExecuteResult<String> getAllYamlInService(@PathVariable String serviceId) throws IOException {
+		return this.resourceService.getAllYamlInService(serviceId);
+	}
 }

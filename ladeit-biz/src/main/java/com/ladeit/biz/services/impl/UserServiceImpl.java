@@ -255,4 +255,30 @@ public class UserServiceImpl implements UserService {
 		result.setResult(this.userDao.getUserBySlackId(userid));
 		return result;
 	}
+
+	/**
+	 * 修改密码
+	 *
+	 * @param user
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> updatePassword(User user, String newPassword) throws NoSuchAlgorithmException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		User userInDatabase = this.getUserByUsername(user.getUsername());
+		boolean flag = PasswordUtil.decode(user.getPassword(), userInDatabase.getSalt(), userInDatabase.getPassword());
+		if (flag) {
+			String[] password = PasswordUtil.encode(newPassword);
+			user.setSalt(password[0]);
+			user.setPassword(password[1]);
+			this.userDao.update(user);
+		} else {
+			String message = messageUtils.matchMessage("M0032", new Object[]{}, Boolean.TRUE);
+			result.setResult(message);
+		}
+		return result;
+	}
 }
