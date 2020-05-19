@@ -1036,58 +1036,78 @@ public class ResourceServiceImpl implements ResourceService {
 			configuration.setCommand(container.getCommand().get(0));
 			Quantity limitscpu = container.getResources().getLimits().get("cpu");
 			Quantity limitsmemory = container.getResources().getLimits().get("memory");
-			Quantity requestscpu = container.getResources().getLimits().get("cpu");
-			Quantity requestsmemory = container.getResources().getLimits().get("memory");
+			Quantity requestscpu = container.getResources().getRequests().get("cpu");
+			Quantity requestsmemory = container.getResources().getRequests().get("memory");
+
 			if (limitscpu != null) {
 				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[1]);
+				String unit = UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[1];
+				if (unit == null) {
+					configuration.setCpuLimitUnit("core");
+				} else {
+					configuration.setCpuLimitUnit(unit);
+				}
 			}
 			if (limitsmemory != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[1]);
+				configuration.setMemLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[0]));
+				configuration.setMemLimitUnit(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[1]);
 			}
 			if (requestscpu != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[1]);
+				configuration.setCpuRequest(Integer.parseInt(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[0]));
+				String unit = UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[1];
+				if (unit == null) {
+					configuration.setCpuRequestUnit("core");
+				} else {
+					configuration.setCpuRequestUnit(unit);
+				}
 			}
 			if (requestsmemory != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[1]);
+				configuration.setMemRequest(Integer.parseInt(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[0]));
+				configuration.setMemRequestUnit(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[1]);
 			}
-			List<com.ladeit.pojo.ao.configuration.Env> envs = container.getEnv().stream().map(e -> {
-				com.ladeit.pojo.ao.configuration.Env envInner = new com.ladeit.pojo.ao.configuration.Env();
-				envInner.setKey(e.getName());
-				envInner.setValue(e.getValue());
-				return envInner;
-			}).collect(Collectors.toList());
-			configuration.setEnvs(envs);
+			if(container.getEnv() != null){
+				List<com.ladeit.pojo.ao.configuration.Env> envs = container.getEnv().stream().map(e -> {
+					com.ladeit.pojo.ao.configuration.Env envInner = new com.ladeit.pojo.ao.configuration.Env();
+					envInner.setKey(e.getName());
+					envInner.setValue(e.getValue());
+					return envInner;
+				}).collect(Collectors.toList());
+				configuration.setEnvs(envs);
+			}
 			LivenessProbe l = new LivenessProbe();
-			l.setCommand(container.getLivenessProbe().getExec().getCommand().get(0));
-			l.setFailureThreshold(container.getLivenessProbe().getFailureThreshold());
-			l.setHeads(container.getLivenessProbe().getHttpGet().getHttpHeaders().stream().map(header -> {
-				Map<String, String> map = new HashMap<>();
-				map.put(header.getName(), header.getValue());
-				return map;
-			}).collect(Collectors.toList()));
-			l.setInitialDelaySeconds(container.getLivenessProbe().getInitialDelaySeconds());
-			l.setPath(container.getLivenessProbe().getHttpGet().getPath());
-			l.setPeriodSeconds(container.getLivenessProbe().getPeriodSeconds());
-			l.setPort(container.getLivenessProbe().getHttpGet().getPort().getIntValue());
-			l.setProtocol(container.getLivenessProbe().getHttpGet().getScheme());
-			l.setSuccessThreshold(container.getLivenessProbe().getSuccessThreshold());
-			l.setTimeoutSeconds(container.getLivenessProbe().getTimeoutSeconds());
+			if(container.getLivenessProbe() != null){
+				if(container.getLivenessProbe().getExec()!=null && container.getLivenessProbe().getExec().getCommand()!=null && !container.getLivenessProbe().getExec().getCommand().isEmpty()){
+					l.setCommand(container.getLivenessProbe().getExec().getCommand().get(0));
+				}
+				l.setFailureThreshold(container.getLivenessProbe().getFailureThreshold());l.setHeads(container.getLivenessProbe().getHttpGet().getHttpHeaders().stream().map(header -> {
+					Map<String, String> map = new HashMap<>();
+					map.put(header.getName(), header.getValue());
+					return map;
+				}).collect(Collectors.toList()));
+				if(container.getLivenessProbe().getHttpGet() != null){
+					l.setPath(container.getLivenessProbe().getHttpGet().getPath());
+					l.setPort(container.getLivenessProbe().getHttpGet().getPort().getIntValue());
+					l.setProtocol(container.getLivenessProbe().getHttpGet().getScheme());
+				}
+				l.setInitialDelaySeconds(container.getLivenessProbe().getInitialDelaySeconds());
+				l.setPeriodSeconds(container.getLivenessProbe().getPeriodSeconds());
+				l.setSuccessThreshold(container.getLivenessProbe().getSuccessThreshold());
+				l.setTimeoutSeconds(container.getLivenessProbe().getTimeoutSeconds());
+			}
 			configuration.setLivenessProbe(l);
 			configuration.setReplicas(dep.getSpec().getReplicas());
 			configuration.setResourceQuota(rqs.isEmpty() ? false : true);
-			configuration.setType("Deployment");
-			List<Volume> volumes = dep.getSpec().getTemplate().getSpec().getVolumes().stream().map(v1Volume -> {
-				Volume v = new Volume();
-				v.setName(v1Volume.getName());
-				v.setPath(v1Volume.getHostPath().getPath());
-				v.setType("PVC");
-				return v;
-			}).collect(Collectors.toList());
-			configuration.setVolumes(volumes);
+			configuration.setType("Statefulset");
+			if(dep.getSpec().getTemplate().getSpec().getVolumes() != null) {
+				List<Volume> volumes = dep.getSpec().getTemplate().getSpec().getVolumes().stream().map(v1Volume -> {
+					Volume v = new Volume();
+					v.setName(v1Volume.getName());
+					v.setPath(v1Volume.getHostPath().getPath());
+					v.setType("PVC");
+					return v;
+				}).collect(Collectors.toList());
+				configuration.setVolumes(volumes);
+			}
 		}
 		if (rcRes.getResult() != null && !rcRes.getResult().isEmpty()) {
 			V1ReplicationController dep = rcRes.getResult().get(0);
@@ -1096,23 +1116,33 @@ public class ResourceServiceImpl implements ResourceService {
 			configuration.setCommand(container.getCommand().get(0));
 			Quantity limitscpu = container.getResources().getLimits().get("cpu");
 			Quantity limitsmemory = container.getResources().getLimits().get("memory");
-			Quantity requestscpu = container.getResources().getLimits().get("cpu");
-			Quantity requestsmemory = container.getResources().getLimits().get("memory");
+			Quantity requestscpu = container.getResources().getRequests().get("cpu");
+			Quantity requestsmemory = container.getResources().getRequests().get("memory");
 			if (limitscpu != null) {
 				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[1]);
+				String unit = UnitUtil.stripNumberUnit(limitscpu.toSuffixedString())[1];
+				if (unit == null) {
+					configuration.setCpuLimitUnit("core");
+				} else {
+					configuration.setCpuLimitUnit(unit);
+				}
 			}
 			if (limitsmemory != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[1]);
+				configuration.setMemLimit(Integer.parseInt(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[0]));
+				configuration.setMemLimitUnit(UnitUtil.stripNumberUnit(limitsmemory.toSuffixedString())[1]);
 			}
 			if (requestscpu != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[1]);
+				configuration.setCpuRequest(Integer.parseInt(UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[0]));
+				String unit = UnitUtil.stripNumberUnit(requestscpu.toSuffixedString())[1];
+				if (unit == null) {
+					configuration.setCpuRequestUnit("core");
+				} else {
+					configuration.setCpuRequestUnit(unit);
+				}
 			}
 			if (requestsmemory != null) {
-				configuration.setCpuLimit(Integer.parseInt(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[0]));
-				configuration.setCpuLimitUnit(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[1]);
+				configuration.setMemRequest(Integer.parseInt(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[0]));
+				configuration.setMemRequestUnit(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[1]);
 			}
 			List<com.ladeit.pojo.ao.configuration.Env> envs = container.getEnv().stream().map(e -> {
 				com.ladeit.pojo.ao.configuration.Env envInner = new com.ladeit.pojo.ao.configuration.Env();

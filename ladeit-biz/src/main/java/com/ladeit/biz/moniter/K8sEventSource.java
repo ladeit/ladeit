@@ -76,7 +76,7 @@ public class K8sEventSource {
 	private void notifyMoniter(String message) {
 		this.listenerList.stream().forEach(listener -> {
 			K8sEventEvent event = new K8sEventEvent();
-			event.setType("Deployment");
+			event.setType(this.type);
 			event.setStatus(1);
 			event.setMessage(message);
 			listener.fallback(event);

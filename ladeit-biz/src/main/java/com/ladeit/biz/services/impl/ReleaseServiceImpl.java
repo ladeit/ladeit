@@ -201,13 +201,47 @@ public class ReleaseServiceImpl implements ReleaseService {
 		Env env = this.envService.getEnvById(envid);
 		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
 		if (release.getIsDefault()) {
-			// 采用极简发布方式,默认配置
-			this.k8sContainerManager.applyYaml(cluster.getK8sKubeconfig(),
-					this.packageDeployment(new V1Deployment(), service.getId(), release.getId(), service.getName(),
-							env, image, configuration));
-
-			this.k8sContainerManager.applyYaml(cluster.getK8sKubeconfig(),
-					this.packageService(null, service.getId(), service.getName(), env, image, configuration));
+			if ("Deployment".equals(configuration.getType())) {
+				// 采用极简发布方式,默认配置
+				V1Deployment v1Deployment = this.packageDeployment(new V1Deployment(), service.getId(),
+						release.getId(),
+						service.getName(),
+						env, image, configuration);
+				V1Deployment v1DeploymentNow =
+						this.k8sWorkLoadsManager.getDeploymentByName(v1Deployment.getMetadata().getNamespace(),
+								v1Deployment.getMetadata().getName(), cluster.getK8sKubeconfig());
+				if (v1DeploymentNow != null) {
+					result.setCode(Code.ALREADY_EXIST);
+					result.addErrorMessage(messageUtils.matchMessage("M0034", new Object[]{}, Boolean.TRUE));
+					return result;
+				}
+				this.k8sWorkLoadsManager.createDeployment(cluster.getK8sKubeconfig(), v1Deployment);
+			} else if ("Statefulset".equals(configuration.getType())) {
+				// 采用极简发布方式,默认配置
+				V1StatefulSet v1StatefulSet = this.packageStatefulSet(new V1StatefulSet(), service.getId(),
+						release.getId(),
+						service.getName(),
+						env, image, configuration);
+				V1StatefulSet v1StatefulSetNow =
+						this.k8sWorkLoadsManager.getStatefulSetByName(v1StatefulSet.getMetadata().getNamespace(),
+								v1StatefulSet.getMetadata().getName(), cluster.getK8sKubeconfig());
+				if (v1StatefulSetNow != null) {
+					result.setCode(Code.ALREADY_EXIST);
+					result.addErrorMessage(messageUtils.matchMessage("M0036", new Object[]{}, Boolean.TRUE));
+					return result;
+				}
+				this.k8sWorkLoadsManager.createStatefulSet(cluster.getK8sKubeconfig(), v1StatefulSet);
+			}
+			V1Service v1Service = this.packageService(null, service.getId(), service.getName(), env, image,
+					configuration);
+			V1Service v1ServiceNow = this.k8sWorkLoadsManager.getServiceByName(v1Service.getMetadata().getNamespace(),
+					v1Service.getMetadata().getName(), cluster.getK8sKubeconfig());
+			if (v1ServiceNow != null) {
+				result.setCode(Code.ALREADY_EXIST);
+				result.addErrorMessage(messageUtils.matchMessage("M0035", new Object[]{}, Boolean.TRUE));
+				return result;
+			}
+			this.k8sWorkLoadsManager.createService(cluster.getK8sKubeconfig(), v1Service);
 			// 创建Gateway
 			Gateway gateway = this.packageGateway(service.getId(), service.getName(), env.getNamespace(),
 					configuration.getHost());
@@ -419,7 +453,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 * @version 1.0.0
 	 */
 	private DestinationRule packageDestinationrule(String serviceId, String releaseId, String version, String name,
-												   String namespace, Integer type) {
+												String namespace, Integer type) {
 		ObjectMeta meta = new ObjectMeta();
 		meta.setName("dest-" + name);
 		meta.setNamespace(namespace);
@@ -509,8 +543,8 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 * @version 1.0.0
 	 */
 	private V1Deployment packageDeployment(V1Deployment deployment, String serviceId, String releaseId, String name,
-										   Env env, Image image,
-										   ConfigurationAO configuration) {
+										Env env, Image image,
+										ConfigurationAO configuration) {
 
 		V1ObjectMeta meta = new V1ObjectMeta();
 		deployment.setMetadata(meta);
@@ -679,6 +713,155 @@ public class ReleaseServiceImpl implements ReleaseService {
 	}
 
 	/**
+	 * 封装statefulSet
+	 *
+	 * @param name
+	 * @param env
+	 * @param image
+	 * @return io.kubernetes.client.models.V1Deployment
+	 * @author falcomlife
+	 * @date 19-11-7
+	 * @version 1.0.0
+	 */
+	private V1StatefulSet packageStatefulSet(V1StatefulSet statefulSet, String serviceId, String releaseId,
+											 String name,
+											 Env env, Image image,
+											 ConfigurationAO configuration) {
+
+		V1ObjectMeta meta = new V1ObjectMeta();
+		statefulSet.setMetadata(meta);
+		Map<String, String> selectorlables = new HashMap<>();
+		Map<String, String> lables = new HashMap<>();
+		meta.setLabels(lables);
+		V1StatefulSetSpec spec = new V1StatefulSetSpec();
+		spec.setReplicas(configuration.getReplicas());
+		statefulSet.setSpec(spec);
+		V1LabelSelector selector = new V1LabelSelector();
+		spec.setSelector(selector);
+		selector.setMatchLabels(selectorlables);
+		V1PodTemplateSpec template = new V1PodTemplateSpec();
+		spec.setTemplate(template);
+		V1ObjectMeta podMeta = new V1ObjectMeta();
+		podMeta.setLabels(lables);
+		template.metadata(podMeta);
+		V1PodSpec podSpec = new V1PodSpec();
+		template.setSpec(podSpec);
+		List<V1Container> containers = new ArrayList<>();
+		podSpec.setContainers(containers);
+		if (configuration.getVolumes() != null) {
+			podSpec.setVolumes(configuration.getVolumes().stream().map(volume -> {
+				V1Volume v1Volume = new V1Volume();
+				V1PersistentVolumeClaimVolumeSource pvc = new V1PersistentVolumeClaimVolumeSource();
+				pvc.setClaimName(volume.getName());
+				v1Volume.setPersistentVolumeClaim(pvc);
+				v1Volume.setName(volume.getName());
+				return v1Volume;
+			}).collect(Collectors.toList()));
+		}
+		V1Container container = new V1Container();
+		if (configuration.getPorts() != null) {
+			container.setPorts(configuration.getPorts().stream().map(port -> {
+				if (StringUtils.isNotBlank(port.getName()) && port.getContainerPort() != 0 && port.getServicePort() != 0) {
+					V1ContainerPort v1ContainerPort = new V1ContainerPort();
+					v1ContainerPort.setContainerPort(port.getContainerPort());
+					v1ContainerPort.setName(port.getName());
+					return v1ContainerPort;
+				} else {
+					return null;
+				}
+			}).collect(Collectors.toList()));
+		}
+		if (configuration.getEnvs() != null) {
+			container.setEnv(configuration.getEnvs().stream().map(envVar -> {
+				if (envVar.getKey() != null && envVar.getValue() != null) {
+					V1EnvVar v1EnvVar = new V1EnvVar();
+					v1EnvVar.setName(envVar.getKey());
+					v1EnvVar.setValue(envVar.getValue());
+					return v1EnvVar;
+				} else {
+					return null;
+				}
+			}).collect(Collectors.toList()));
+		}
+		if (StringUtils.isNotBlank(configuration.getCommand())) {
+			List<String> commands = new ArrayList<>();
+			commands.add(configuration.getCommand());
+			container.setCommand(commands);
+		}
+		container.setArgs(configuration.getArgs());
+		container.setName(name);
+		container.setImage(image.getImage());
+		if (configuration.getVolumes() != null) {
+			container.setVolumeMounts(configuration.getVolumes().stream().map(volume -> {
+				V1VolumeMount v1VolumeMount = new V1VolumeMount();
+				v1VolumeMount.setMountPath(volume.getPath());
+				v1VolumeMount.setName(volume.getName());
+				return v1VolumeMount;
+			}).collect(Collectors.toList()));
+		}
+		if (configuration.getLivenessProbe() != null) {
+			LivenessProbe livenessProbe = configuration.getLivenessProbe();
+			V1Probe v1Probe = new V1Probe();
+			container.setLivenessProbe(v1Probe);
+			if ("command".equals(livenessProbe.getType())) {
+				V1ExecAction execAction = new V1ExecAction();
+				ArrayList commandList = new ArrayList();
+				execAction.setCommand(commandList);
+				commandList.add(livenessProbe.getCommand());
+				v1Probe.setExec(execAction);
+			} else if ("httpget".equals(livenessProbe.getType())) {
+				V1HTTPGetAction v1HTTPGetAction = new V1HTTPGetAction();
+				v1HTTPGetAction.setHost("localhost");
+				v1HTTPGetAction.setPath(livenessProbe.getPath());
+				IntOrString intOrString = new IntOrString(livenessProbe.getPort());
+				v1HTTPGetAction.setPort(intOrString);
+				v1HTTPGetAction.setScheme(livenessProbe.getProtocol());
+				v1Probe.setHttpGet(v1HTTPGetAction);
+			}
+			v1Probe.setFailureThreshold(livenessProbe.getFailureThreshold());
+			v1Probe.setSuccessThreshold(livenessProbe.getSuccessThreshold());
+			v1Probe.setInitialDelaySeconds(livenessProbe.getInitialDelaySeconds());
+			v1Probe.setPeriodSeconds(livenessProbe.getPeriodSeconds());
+			v1Probe.setTimeoutSeconds(livenessProbe.getTimeoutSeconds());
+		}
+		if (configuration.getResourceQuota() != null && configuration.getResourceQuota()) {
+			V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
+			container.setResources(resourceRequirements);
+			Map<String, Quantity> limit = new HashMap<>();
+			Map<String, Quantity> request = new HashMap<>();
+			resourceRequirements.setLimits(limit);
+			resourceRequirements.setRequests(request);
+			Quantity cpulimit = new Quantity(UnitUtil.unitConverter(configuration.getCpuLimitUnit(),
+					configuration.getCpuLimit(), 1), Quantity.Format.BINARY_SI);
+			Quantity memlimit = new Quantity(UnitUtil.unitConverter(configuration.getMemLimitUnit(),
+					configuration.getMemLimit(), 2), Quantity.Format.BINARY_SI);
+			Quantity cpurequest = new Quantity(UnitUtil.unitConverter(configuration.getCpuRequestUnit(),
+					configuration.getCpuRequest(), 1), Quantity.Format.BINARY_SI);
+			Quantity memrequest = new Quantity(UnitUtil.unitConverter(configuration.getMemRequestUnit(),
+					configuration.getMemRequest(), 2), Quantity.Format.BINARY_SI);
+			limit.put("cpu", cpulimit);
+			limit.put("memory", memlimit);
+			request.put("cpu", cpurequest);
+			request.put("memory", memrequest);
+			container.setResources(resourceRequirements);
+		}
+		meta.setName(name + "-" + image.getVersion());
+		meta.setNamespace(env.getNamespace());
+		Map<String, String> serviceLabel = new HashMap<>();
+		serviceLabel.put("serviceId", serviceId);
+		meta.setLabels(serviceLabel);
+		lables.put("app", name);
+		lables.put("version", image.getVersion());
+		lables.put("serviceId", serviceId);
+		lables.put("releaseId", releaseId);
+		selectorlables.put("app", name);
+		selectorlables.put("serviceId", serviceId);
+		podMeta.setName(name);
+		containers.add(container);
+		return statefulSet;
+	}
+
+	/**
 	 * 生成k8sapiclient
 	 *
 	 * @param id
@@ -714,7 +897,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 * 查询某个release
 	 *
 	 * @param releaseId,releaseName
-	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                               <                                                               com.ladeit.pojo.ao.ImageAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ImageAO>>
 	 * @date 2019/11/11
 	 * @ahthor MddandPyy
 	 */
@@ -732,7 +915,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 * 根据releaseID查询某个release
 	 *
 	 * @param releaseId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                               <                                                               com.ladeit.pojo.ao.ImageAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ImageAO>>
 	 * @date 2019/11/11
 	 * @ahthor MddandPyy
 	 */
@@ -758,7 +941,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 * 查询服务发布信息
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                               <                                                               com.ladeit.pojo.ao.ReleaseAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ReleaseAO>>
 	 * @date 2019/11/11
 	 * @ahthor MddandPyy
 	 */
@@ -840,7 +1023,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 		Env env = this.envService.getEnvById(envid);
 		String config = this.resourceService.getConfigByServiceId(serviceId);
 		Image image = this.imageService.getImageById(candidate.getImageId());
-		User user = SecurityUtils.getSubject()==null?null:(User) SecurityUtils.getSubject().getPrincipal();
+		User user = SecurityUtils.getSubject() == null ? null : (User) SecurityUtils.getSubject().getPrincipal();
 		// 先查询servcie，比对状态，如果正处于发版状态，不能发版。这里查询到的servcies，下面给message传递数据也能用到
 		ExecuteResult<Service> s = this.serviceService.getById(service.getId());
 		Service servcieNow = s.getResult();
@@ -848,7 +1031,6 @@ public class ReleaseServiceImpl implements ReleaseService {
 			result.setCode(Code.NOTFOUND);
 			String message = messageUtils.matchMessage("M0016", new Object[]{}, auto != null && !auto ? true : false);
 			result.addWarningMessage(message);
-
 			return result;
 		}
 		if (!"-1".equals(servcieNow.getStatus()) && !"0".equals(servcieNow.getStatus()) && !"8".equals(servcieNow.getStatus())) {
@@ -943,7 +1125,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 							  List<V1StatefulSet> statefulSet, List<V1ReplicationController> replicationController,
 							  String config, Env env, Candidate candidate, TopologyAO topology,
 							  ConfigurationAO configuration) throws ApiException, IOException {
-		User user = SecurityUtils.getSubject()==null?null:(User) SecurityUtils.getSubject().getPrincipal();
+		User user = SecurityUtils.getSubject() == null ? null : (User) SecurityUtils.getSubject().getPrincipal();
 		Date date = new Date();
 		// 现根据service查询现在的release
 		ExecuteResult<Service> serviceExecuteResult = this.serviceService.getById(service.getId());
@@ -980,9 +1162,10 @@ public class ReleaseServiceImpl implements ReleaseService {
 		this.operationService.insert(operation);
 		// 操作k8s
 		String uid = null;
-		if (!deploymentflag) {
-			V1Deployment v1Deployment = null;
-			if (release.getNewYaml() != null && release.getNewYaml()) {
+		V1Deployment v1Deployment = null;
+		V1StatefulSet v1StatefulSet = null;
+		if (release.getNewYaml() != null && release.getNewYaml()) {
+			if (!deploymentflag) {
 				String resourcename = deployment.get(0).getMetadata().getName();
 				V1Deployment deploymentnew = this.packageDeployment(deployment.get(0), service.getId(), releaseid,
 						service.getName(), env, image, configuration);
@@ -990,56 +1173,79 @@ public class ReleaseServiceImpl implements ReleaseService {
 				deploymentnew.getSpec().getTemplate().getMetadata().getLabels().put("version", image.getVersion());
 				deploymentnew.getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
 				v1Deployment = this.k8sWorkLoadsManager.replaceDeployment(config, deploymentnew);
-				ExecuteResult<List<V1Service>> v1Service = this.k8sWorkLoadsManager.getService(service.getId(),
-						config);
-				if (v1Service.getCode() == Code.SUCCESS) {
-					V1Service finalService = this.packageService(null, service.getId(), service.getName(), env,
-							image, configuration);
-					finalService.getMetadata().setResourceVersion(v1Service.getResult().get(0).getMetadata().getResourceVersion());
-					finalService.getSpec().setClusterIP(v1Service.getResult().get(0).getSpec().getClusterIP());
-					this.k8sWorkLoadsManager.replaceService(config, finalService);
-				}
-				// 创建Gateway
-				Gateway gateway = this.packageGateway(service.getId(), service.getName(), env.getNamespace(),
-						configuration.getHost());
-				// 创建virtualservice
-				VirtualService virtualServiceCreate = this.packageVirtualService(service.getId(), release.getId(),
-						service.getName(), env.getNamespace(), release.getType(), image.getVersion(), configuration);
-				// 创建destinationrule
-				DestinationRule destinationRuleCreate = this.packageDestinationrule(service.getId(), release.getId(),
-						image.getVersion(), service.getName(), env.getNamespace(), release.getType());
-				this.istioManager.createGateway(config, gateway);
-				this.istioManager.createVirtualServices(config, virtualServiceCreate);
-				this.istioManager.createDestinationrules(config, destinationRuleCreate);
-			} else {
+				uid = v1Deployment.getMetadata().getUid();
+			} else if (!statefulSetflag) {
+				String resourcename = statefulSet.get(0).getMetadata().getName();
+				V1StatefulSet v1Statefulnew = this.packageStatefulSet(statefulSet.get(0), service.getId(),
+						releaseid,
+						service.getName(), env, image, configuration);
+				v1Statefulnew.getMetadata().setName(resourcename);
+				v1Statefulnew.getSpec().getTemplate().getMetadata().getLabels().put("version", image.getVersion());
+				v1Statefulnew.getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
+				v1StatefulSet = this.k8sWorkLoadsManager.replaceStatefulSet(config, v1Statefulnew);
+				uid = v1StatefulSet.getMetadata().getUid();
+			} else if (!replicationControllerflag) {
+
+			}
+			ExecuteResult<List<V1Service>> v1Service = this.k8sWorkLoadsManager.getService(service.getId(),
+					config);
+			if (v1Service.getCode() == Code.SUCCESS) {
+				V1Service finalService = this.packageService(null, service.getId(), service.getName(), env,
+						image, configuration);
+				finalService.getMetadata().setResourceVersion(v1Service.getResult().get(0).getMetadata().getResourceVersion());
+				finalService.getSpec().setClusterIP(v1Service.getResult().get(0).getSpec().getClusterIP());
+				this.k8sWorkLoadsManager.replaceService(config, finalService);
+			}
+			// 创建Gateway
+			Gateway gateway = this.packageGateway(service.getId(), service.getName(), env.getNamespace(),
+					configuration.getHost());
+			// 创建virtualservice
+			VirtualService virtualServiceCreate = this.packageVirtualService(service.getId(), release.getId(),
+					service.getName(), env.getNamespace(), release.getType(), image.getVersion(), configuration);
+			// 创建destinationrule
+			DestinationRule destinationRuleCreate = this.packageDestinationrule(service.getId(), release.getId(),
+					image.getVersion(), service.getName(), env.getNamespace(), release.getType());
+			this.istioManager.createGateway(config, gateway);
+			this.istioManager.createVirtualServices(config, virtualServiceCreate);
+			this.istioManager.createDestinationrules(config, destinationRuleCreate);
+		} else {
+			if (!deploymentflag) {
 				deployment.get(0).getSpec().getTemplate().getSpec().getContainers().get(0).setImage(image.getImage());
 				deployment.get(0).getSpec().getTemplate().getMetadata().getLabels().put("version", image.getVersion());
 				deployment.get(0).getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
 				v1Deployment = this.k8sWorkLoadsManager.replaceDeployment(config, deployment.get(0));
+				uid = v1Deployment.getMetadata().getUid();
+			} else if (!statefulSetflag) {
+				statefulSet.get(0).getSpec().getTemplate().getSpec().getContainers().get(0).setImage(image.getImage());
+				statefulSet.get(0).getSpec().getTemplate().getMetadata().getLabels().put("version",
+						image.getVersion());
+				statefulSet.get(0).getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
+				v1StatefulSet = this.k8sWorkLoadsManager.replaceStatefulSet(config, statefulSet.get(0));
+				uid = v1StatefulSet.getMetadata().getUid();
+			} else if (!replicationControllerflag) {
+				replicationController.get(0).getSpec().getTemplate().getSpec().getContainers().get(0).setImage(image.getImage());
+				replicationController.get(0).getSpec().getSelector().put("version", image.getVersion());
+				replicationController.get(0).getSpec().getTemplate().getMetadata().getLabels().put("version",
+						image.getVersion());
+				replicationController.get(0).getSpec().getTemplate().getMetadata().getLabels().put("releaseId",
+						releaseid);
+				this.k8sWorkLoadsManager.replaceReplicationController(config, replicationController.get(0));
 			}
-			uid = v1Deployment.getMetadata().getUid();
-			K8sEventSource source = new K8sEventSource(this.k8sClusterManager,
+		}
+		K8sEventSource source = null;
+		if (!deploymentflag) {
+			source = new K8sEventSource(this.k8sClusterManager,
 					this.clusterService.getClusterById(env.getClusterId()).getK8sKubeconfig(), env.getNamespace(),
 					"Deployment", deployment.get(0).getMetadata().getName());
-			K8sEventMoniterListener k8sEventMoniterListener =
-					k8sEventEvent -> System.out.println(k8sEventEvent.getType() + "," + k8sEventEvent.getStatus() + ","
-							+ k8sEventEvent.getMessage());
-			source.addMoniter(k8sEventMoniterListener);
-			source.startAction();
 		} else if (!statefulSetflag) {
-			statefulSet.get(0).getSpec().getTemplate().getSpec().getContainers().get(0).setImage(image.getImage());
-			statefulSet.get(0).getSpec().getSelector().putMatchLabelsItem("version", image.getVersion());
-			statefulSet.get(0).getSpec().getTemplate().getMetadata().getLabels().put("version", image.getVersion());
-			statefulSet.get(0).getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
-			this.k8sWorkLoadsManager.replaceStatefulSet(config, statefulSet.get(0));
+			source = new K8sEventSource(this.k8sClusterManager,
+					this.clusterService.getClusterById(env.getClusterId()).getK8sKubeconfig(), env.getNamespace(),
+					"StatefulSet", statefulSet.get(0).getMetadata().getName());
 		} else if (!replicationControllerflag) {
-			replicationController.get(0).getSpec().getTemplate().getSpec().getContainers().get(0).setImage(image.getImage());
-			replicationController.get(0).getSpec().getSelector().put("version", image.getVersion());
-			replicationController.get(0).getSpec().getTemplate().getMetadata().getLabels().put("version",
-					image.getVersion());
-			replicationController.get(0).getSpec().getTemplate().getMetadata().getLabels().put("releaseId", releaseid);
-			this.k8sWorkLoadsManager.replaceReplicationController(config, replicationController.get(0));
 		}
+		K8sEventMoniterListener k8sEventMoniterListener = k8sEventEvent -> System.out.println(k8sEventEvent.getType() + "," + k8sEventEvent.getStatus() + "," + k8sEventEvent.getMessage());
+		source.addMoniter(k8sEventMoniterListener);
+		source.startAction();
 		this.producer.putCandidate(release.getId(), service.getId(), candidate.getId(), image.getId(), uid, topology,
 				image.getVersion(), 8, null, false);
 	}
@@ -1067,11 +1273,11 @@ public class ReleaseServiceImpl implements ReleaseService {
 	 */
 	@Override
 	public void abTest(Service service, Image image, Release release, Boolean deploymentflag,
-					   Boolean statefulSetflag, Boolean replicationControllerflag, List<V1Deployment> deployment,
-					   List<V1StatefulSet> statefulSet, List<V1ReplicationController> replicationController,
-					   String config, Env env, Candidate candidate, TopologyAO topology,
-					   ConfigurationAO configuration) throws ApiException {
-		User user = SecurityUtils.getSubject()==null?null:(User) SecurityUtils.getSubject().getPrincipal();
+					Boolean statefulSetflag, Boolean replicationControllerflag, List<V1Deployment> deployment,
+					List<V1StatefulSet> statefulSet, List<V1ReplicationController> replicationController,
+					String config, Env env, Candidate candidate, TopologyAO topology,
+					ConfigurationAO configuration) throws ApiException {
+		User user = SecurityUtils.getSubject() == null ? null : (User) SecurityUtils.getSubject().getPrincipal();
 		Date date = new Date();
 		// 现根据service查询现在的release
 		ExecuteResult<Service> serviceExecuteResult = this.serviceService.getById(service.getId());

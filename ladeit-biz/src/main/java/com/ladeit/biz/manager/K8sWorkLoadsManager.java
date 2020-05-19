@@ -15,7 +15,7 @@ public interface K8sWorkLoadsManager {
 	 *
 	 * @param labelSelector
 	 * @param config
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1Pod>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Pod>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -37,7 +37,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询CronJob
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1beta1CronJob>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1beta1CronJob>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -48,7 +48,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询replicationController
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1ReplicationController>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1ReplicationController>>
 	 * @author falcomlife
 	 * @date 19-12-1
 	 * @version 1.0.0
@@ -59,7 +59,7 @@ public interface K8sWorkLoadsManager {
 	 * 得到daemonset
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1DaemonSet>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1DaemonSet>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -70,7 +70,7 @@ public interface K8sWorkLoadsManager {
 	 * 得到deployment
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1Deployment>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Deployment>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -78,10 +78,23 @@ public interface K8sWorkLoadsManager {
 	ExecuteResult<List<V1Deployment>> getDeployment(String labelSelector, String config);
 
 	/**
+	 * 获取Deployment
+	 *
+	 * @param namespace
+	 * @param name
+	 * @param config
+	 * @return com.ladeit.common.ExecuteResult<java.util.List < io.kubernetes.client.models.V1Deployment>>
+	 * @author falcomlife
+	 * @date 19-11-7
+	 * @version 1.0.0
+	 */
+	V1Deployment getDeploymentByName(String namespace, String name, String config) throws ApiException;
+
+	/**
 	 * 得到job
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1Job>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Job>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -92,7 +105,7 @@ public interface K8sWorkLoadsManager {
 	 * 得到statefulset
 	 *
 	 * @param labelSelector
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1StatefulSet>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1StatefulSet>>
 	 * @author falcomlife
 	 * @date 19-11-7
 	 * @version 1.0.0
@@ -112,6 +125,16 @@ public interface K8sWorkLoadsManager {
 	void createDeployment(String config, V1Deployment deployment) throws ApiException;
 
 	/**
+	 * 运行service
+	 *
+	 * @param config
+	 * @author falcomlife
+	 * @date 19-11-7
+	 * @version 1.0.0
+	 */
+	void createService(String config, V1Service service) throws ApiException;
+
+	/**
 	 * 通过name和namespace查询数据
 	 *
 	 * @param
@@ -127,7 +150,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询service
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Service>>
 	 * @author falcomlife
 	 * @date 19-12-4
 	 * @version 1.0.0
@@ -138,7 +161,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询ingress
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1beta1Ingress>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1beta1Ingress>>
 	 * @author falcomlife
 	 * @date 19-12-4
 	 * @version 1.0.0
@@ -149,7 +172,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询configmap
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1Service>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Service>>
 	 * @author falcomlife
 	 * @date 19-12-9
 	 * @version 1.0.0
@@ -160,7 +183,7 @@ public interface K8sWorkLoadsManager {
 	 * 查询pvc
 	 *
 	 * @param serviceId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.kubernetes.client.models.V1ConfigMap>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1ConfigMap>>
 	 * @author falcomlife
 	 * @date 19-12-9
 	 * @version 1.0.0
@@ -223,7 +246,7 @@ public interface K8sWorkLoadsManager {
 	 * @date 19-12-24
 	 * @version 1.0.0
 	 */
-	void replaceStatefulSet(String config, V1StatefulSet statefulSet) throws ApiException;
+	V1StatefulSet replaceStatefulSet(String config, V1StatefulSet statefulSet) throws ApiException;
 
 	/**
 	 * 更新replicationController
@@ -363,4 +386,30 @@ public interface K8sWorkLoadsManager {
 	 * @version 1.0.0
 	 */
 	void restart(String config, String serviceId) throws ApiException;
+
+	/**
+	 * 根据名称查询service
+	 *
+	 * @param namespace
+	 * @param name
+	 * @param k8sKubeconfig
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-18
+	 * @version 1.0.0
+	 */
+	V1Service getServiceByName(String namespace, String name, String k8sKubeconfig) throws ApiException;
+
+	/**
+	 * 获取statefulset
+	 *
+	 * @param namespace
+	 * @param name
+	 * @param config
+	 * @return io.kubernetes.client.models.V1StatefulSet
+	 * @author falcomlife
+	 * @date 20-5-18
+	 * @version 1.0.0
+	 */
+	V1StatefulSet getStatefulSetByName(String namespace, String name, String config) throws ApiException;
 }
