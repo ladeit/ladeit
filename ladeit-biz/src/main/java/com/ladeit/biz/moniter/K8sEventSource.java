@@ -29,7 +29,8 @@ public class K8sEventSource {
 
 	List<K8sEventMoniterListener> listenerList = new ArrayList<>();
 
-	public K8sEventSource(K8sClusterManager k8sClusterManager, String config, String namespace, String type, String name){
+	public K8sEventSource(K8sClusterManager k8sClusterManager, String config, String namespace, String type,
+						  String name) {
 		this.k8sClusterManager = k8sClusterManager;
 		this.config = config;
 		this.namespace = namespace;
@@ -52,8 +53,9 @@ public class K8sEventSource {
 		ExecutorService singleThreadPool = new ThreadPoolExecutor(1, 1,
 				0L, TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>(1024), namedThreadFactory, new ThreadPoolExecutor.AbortPolicy());
+
 		singleThreadPool.execute(() -> {
-			while(true) {
+			while (true) {
 				try {
 					Thread.sleep(1000);
 					List<V1beta1Event> list = k8sClusterManager.getResourceEvent(this.config, this.namespace,

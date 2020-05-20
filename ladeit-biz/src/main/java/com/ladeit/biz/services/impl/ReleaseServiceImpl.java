@@ -1243,9 +1243,9 @@ public class ReleaseServiceImpl implements ReleaseService {
 					"StatefulSet", statefulSet.get(0).getMetadata().getName());
 		} else if (!replicationControllerflag) {
 		}
-		K8sEventMoniterListener k8sEventMoniterListener = k8sEventEvent -> System.out.println(k8sEventEvent.getType() + "," + k8sEventEvent.getStatus() + "," + k8sEventEvent.getMessage());
-		source.addMoniter(k8sEventMoniterListener);
-		source.startAction();
+//		K8sEventMoniterListener k8sEventMoniterListener = k8sEventEvent -> System.out.println(k8sEventEvent.getType() + "," + k8sEventEvent.getStatus() + "," + k8sEventEvent.getMessage());
+//		source.addMoniter(k8sEventMoniterListener);
+//		source.startAction();
 		this.producer.putCandidate(release.getId(), service.getId(), candidate.getId(), image.getId(), uid, topology,
 				image.getVersion(), 8, null, false);
 	}

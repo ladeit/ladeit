@@ -351,14 +351,14 @@ public class ResourceServiceImpl implements ResourceService {
 			V1Scale scale = this.k8sWorkLoadsManager.scaleDeployment(config,
 					deployment.getMetadata().getNamespace(), deployment.getMetadata().getName(), deployment);
 			result.setResult(scale.getStatus().getReplicas() + "");
-		} else if (statefulSets.getResult() != null && deployments.getResult().size() != 0) {
+		} else if (statefulSets.getResult() != null && statefulSets.getResult().size() != 0) {
 			V1StatefulSet statefulSet = statefulSets.getResult().get(0);
 			statefulSet.getSpec().setReplicas(count);
 			nowPodCount = statefulSet.getStatus().getReplicas() == null ? 0 : statefulSet.getStatus().getReplicas();
 			V1Scale scale = this.k8sWorkLoadsManager.scaleStatefulSet(config,
 					statefulSet.getMetadata().getNamespace(), statefulSet.getMetadata().getName(), statefulSet);
 			result.setResult(scale.getStatus().getReplicas() + "");
-		} else if (replicationControllers.getResult() != null && deployments.getResult().size() != 0) {
+		} else if (replicationControllers.getResult() != null && replicationControllers.getResult().size() != 0) {
 			V1ReplicationController replicationController = replicationControllers.getResult().get(0);
 			replicationController.getSpec().setReplicas(count);
 			nowPodCount = replicationController.getStatus().getReplicas() == null ? 0 :
