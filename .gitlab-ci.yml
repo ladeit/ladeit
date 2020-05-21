@@ -13,7 +13,7 @@ stages:
     paths:
     - ladeit-biz/target/ladeit.jar
 .release-common: &release-common
-  image: docker:stable-dind
+  image: docker:18.03-dind
   stage: release
   script:
   - echo "<<<<<release>>>>>"
