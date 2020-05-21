@@ -356,7 +356,7 @@ public class EventsSubcriber {
 //				}
 			} else if ("ReplicaSet".equals(kind) || "Deployment".equals(kind) || "StatefulSet".equals(kind)) {
 				Integer replicas = jo.getJSONObject("spec").getInteger("replicas");
-				Integer readyReplicas = jo.getJSONObject("status").getInteger("readyReplicas");
+				Integer readyReplicas = jo.getJSONObject("status").getInteger("replicas");
 				if (replicas != null && replicas.equals(readyReplicas)) {
 					this.updateService(serviceId, "0");
 					result.setStatus("0");
@@ -421,8 +421,9 @@ public class EventsSubcriber {
 			if (owner.getJSONObject("status").getInteger("replicas") != null && owner.getJSONObject("status").getInteger("replicas").equals(0)) {
 				this.updateService(serviceId, "0");
 			} else {
-				Integer readyReplicas = owner.getJSONObject("status").getInteger("readyReplicas");
-				Integer replicas = owner.getJSONObject("status").getInteger("replicas");
+				Integer replicas = owner.getJSONObject("spec").getInteger("replicas");
+				Integer readyReplicas = owner.getJSONObject("status").getInteger("replicas");
+				log.info(readyReplicas+"<<>>"+replicas);
 				if (readyReplicas != null && replicas != null && readyReplicas.equals(replicas)) {
 					int[] type = {4, 8, 10, 11};
 					boolean update = false;
