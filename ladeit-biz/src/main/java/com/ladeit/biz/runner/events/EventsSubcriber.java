@@ -178,7 +178,8 @@ public class EventsSubcriber {
 											// 在redis中存储半小时的历史event信息
 											this.redisEventsHistory(event, v1event);
 											// 执行生命周期检测，修改数据库信息
-											Service service = this.releaseLifecycleMonitor(v1event, serviceId, s.getResult(), jo);
+											Service service = this.releaseLifecycleMonitor(v1event, serviceId,
+													s.getResult(), jo);
 											s.getResult().setStatus(service.getStatus());
 											// redis发布实时信息
 											this.redisEventActual(event, s.getResult());
@@ -331,12 +332,28 @@ public class EventsSubcriber {
 				log.info("资源" + event.getInvolvedObject().getKind() + "," + event.getInvolvedObject().getUid() +
 						"状态：replicas " + status.getInteger("replicas") + ",readyReplicas " + status.getInteger(
 						"readyReplicas"));
+				result.setStatus(s.getStatus());
 			}
 		} else if ("Normal".equals(event.getType())) {
 			String kind = event.getInvolvedObject().getKind();
-			if ("Pod".equals(kind)) {
-				this.releaseLifecycleMonitor(jo);
-				result.setStatus("0");
+			if ("Pod".equals(kind) && "Started".equals(event.getReason()) && !"istio-proxy".equals(event.getInvolvedObject().getName()) && !"istio-init".equals(event.getInvolvedObject().getName())) {
+//				if (jo.getJSONObject("metadata").getJSONArray("ownerReferences") != null) {
+//					String parentUid =
+//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0))).getString("uid");
+//					String parentKind =
+//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0))).getString("kind");
+//					ExecuteResult<JSONObject> parentRes = resourceService.getResourceByUid(config, parentUid,
+//							parentKind);
+//					JSONObject parent = parentRes.getResult();
+//					if (parent != null) {
+//						Integer replicas = parent.getJSONObject("spec").getInteger("replicas");
+//						Integer newReplicas = parent.getJSONObject("status").getInteger("replicas");
+//						if (replicas != null && replicas.equals(newReplicas)) {
+							this.releaseLifecycleMonitor(jo);
+							result.setStatus("0");
+//						}
+//					}
+//				}
 			} else if ("ReplicaSet".equals(kind) || "Deployment".equals(kind) || "StatefulSet".equals(kind)) {
 				Integer replicas = jo.getJSONObject("spec").getInteger("replicas");
 				Integer readyReplicas = jo.getJSONObject("status").getInteger("readyReplicas");
@@ -715,7 +732,6 @@ public class EventsSubcriber {
 			serviceService.updateStatusById(s);
 			s = null;
 			// 修改release状态
-
 			ExecuteResult<Release> releaseInUse =
 					releaseService.getInUseReleaseByServiceId(service.getResult().getId());
 			if (releaseInUse.getResult() == null) {

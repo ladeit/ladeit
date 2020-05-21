@@ -27,12 +27,12 @@ public class EventStarter implements CommandLineRunner {
 	private EventHandler eventHandler;
 	@Override
 	public void run(String... args) throws Exception {
-//		ExecuteResult<List<Env>> envRes = this.envService.getAllEnv();
-//		List<Env> envs = envRes.getResult();
-//		if (envs != null && !envs.isEmpty()) {
-//			for (Env env : envs) {
-//				this.eventHandler.put(env.getId(),null);
-//			}
-//		}
+		ExecuteResult<List<Env>> envRes = this.envService.getAllEnv();
+		List<Env> envs = envRes.getResult();
+		if (envs != null && !envs.isEmpty()) {
+			for (Env env : envs) {
+				this.eventHandler.put(env.getId(),null);
+			}
+		}
 	}
 }

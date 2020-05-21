@@ -177,9 +177,7 @@ public class MessageServiceImpl implements MessageService {
 					Map<String, Object> param = message.getParams();
 					// content+"\nImage: "+param.get("imageVersioin")+"\nDeployment: "+param.get("releaseName")
 					// +"\nFrom: "+param.get("operChannel");
-					content =
-							content + "\nImage: " + param.get("imageVersioin") + "\nRelease: " + param.get(
-									"releaseName") + "\nOperated on: " + param.get("operChannel");
+					content = content + "\nImage: " + param.get("imageVersioin") + "\nRelease: " + param.get("releaseName") + "\nOperated on: " + param.get("operChannel");
 					messagenew.setContent(content);
 					result = PushCommonMessage(messagenew);
 					break;

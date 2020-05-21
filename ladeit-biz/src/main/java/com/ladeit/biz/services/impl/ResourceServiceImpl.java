@@ -955,6 +955,7 @@ public class ResourceServiceImpl implements ResourceService {
 			V1Deployment dep = depRes.getResult().get(0);
 			V1Container container = dep.getSpec().getTemplate().getSpec().getContainers().get(0);
 			configuration.setArgs(container.getArgs());
+			configuration.setCommand(container.getCommand().get(0));
 			if (configuration.getCommand() != null && !container.getCommand().isEmpty()) {
 				configuration.setCommand(container.getCommand().get(0));
 			}
