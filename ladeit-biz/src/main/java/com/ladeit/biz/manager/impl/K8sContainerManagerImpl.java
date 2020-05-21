@@ -67,12 +67,12 @@ public class K8sContainerManagerImpl implements K8sContainerManager {
 			V1Deployment v1Deployment = Yaml.loadAs(yamlContent.getContent(), V1Deployment.class);
 			v1Api.replaceNamespacedDeploymentAsync(v1Deployment.getMetadata().getName(),
 					yamlContent.getNameSpace(), v1Deployment, null, null, apiCallback);
-		} else if (KindType.V1StatefulSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Statefulset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api v1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1StatefulSet v1StatefulSet = Yaml.loadAs(yamlContent.getContent(), V1StatefulSet.class);
 			v1Api.replaceNamespacedStatefulSet(v1StatefulSet.getMetadata().getName(), yamlContent.getNameSpace(),
 					v1StatefulSet, null, null);
-		} else if (KindType.V1ReplicaSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Replicaset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api v1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1ReplicaSet v1ReplicaSet = Yaml.loadAs(yamlContent.getContent(), V1ReplicaSet.class);
 			v1Api.replaceNamespacedReplicaSet(v1ReplicaSet.getMetadata().getName(), yamlContent.getNameSpace(),
@@ -87,7 +87,7 @@ public class K8sContainerManagerImpl implements K8sContainerManager {
 			V1beta1CronJob v1beta1CronJob = Yaml.loadAs(yamlContent.getContent(), V1beta1CronJob.class);
 			batchV1beta1Api.replaceNamespacedCronJob(v1beta1CronJob.getMetadata().getName(),
 					yamlContent.getNameSpace(), v1beta1CronJob, null, null);
-		} else if (KindType.V1DaemonSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Daemonset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api appsV1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1DaemonSet v1DaemonSet = Yaml.loadAs(yamlContent.getContent(), V1DaemonSet.class);
 			appsV1Api.replaceNamespacedDaemonSet(v1DaemonSet.getMetadata().getName(), yamlContent.getNameSpace(),
@@ -169,12 +169,12 @@ public class K8sContainerManagerImpl implements K8sContainerManager {
 			V1Deployment v1Deployment = Yaml.loadAs(yamlContent.getContent(), V1Deployment.class);
 			v1Deployment.getMetadata().setNamespace(yamlContent.getNameSpace());
 			v1Api.createNamespacedDeployment(yamlContent.getNameSpace(), v1Deployment, true, null, null);
-		} else if (KindType.V1StatefulSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Statefulset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api v1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1StatefulSet v1StatefulSet = Yaml.loadAs(yamlContent.getContent(), V1StatefulSet.class);
 			v1StatefulSet.getMetadata().setNamespace(yamlContent.getNameSpace());
 			v1Api.createNamespacedStatefulSet(yamlContent.getNameSpace(), v1StatefulSet, true, null, null);
-		} else if (KindType.V1ReplicaSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Replicaset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api v1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1ReplicaSet v1ReplicaSet = Yaml.loadAs(yamlContent.getContent(), V1ReplicaSet.class);
 			v1ReplicaSet.getMetadata().setNamespace(yamlContent.getNameSpace());
@@ -189,7 +189,7 @@ public class K8sContainerManagerImpl implements K8sContainerManager {
 			V1beta1CronJob v1beta1CronJob = Yaml.loadAs(yamlContent.getContent(), V1beta1CronJob.class);
 			batchV1beta1Api.createNamespacedCronJob(yamlContent.getNameSpace(), v1beta1CronJob, true, null,
 					null);
-		} else if (KindType.V1DaemonSet.toString().equals(yamlContent.getKindType())) {
+		} else if (KindType.V1Daemonset.toString().equals(yamlContent.getKindType())) {
 			AppsV1Api appsV1Api = (AppsV1Api) K8sClientUtil.get(config, AppsV1Api.class);
 			V1DaemonSet v1DaemonSet = Yaml.loadAs(yamlContent.getContent(), V1DaemonSet.class);
 			v1DaemonSet.getMetadata().setNamespace(yamlContent.getNameSpace());
