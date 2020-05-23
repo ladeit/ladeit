@@ -2,6 +2,7 @@
 
 # Ladeit
 [![Build Status](https://travis-ci.com/ladeit/ladeit.svg?branch=master)](https://travis-ci.com/github/ladeit/ladeit)
+![ladeit](https://img.shields.io/github/license/ladeit/ladeit?style=flat&color=success)
 ![ladeit logo](docs/images/ladeit-logo.svg)
 
 ## Overview

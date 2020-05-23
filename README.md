@@ -2,6 +2,7 @@
 
 # Ladeit
 [![Build Status](https://travis-ci.com/ladeit/ladeit.svg?branch=master)](https://travis-ci.com/github/ladeit/ladeit)
+![ladeit](https://img.shields.io/github/license/ladeit/ladeit?style=flat&color=success)
 ![ladeit logo](https://github.com/ladeit/ladeit.github.io/blob/master/images/ladeit-logo.svg)
 
 ## Overview
@@ -26,7 +27,7 @@ As the containerization and micro-service going on, the operation work are more 
 
 ## Quick start
 
-> Please use admin/admin to login after installation.
+> Please use `admin/admin` to login after installation.
 
 ### For trial
 
