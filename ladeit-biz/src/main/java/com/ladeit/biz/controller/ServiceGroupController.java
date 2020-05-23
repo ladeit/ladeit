@@ -161,7 +161,7 @@ public class ServiceGroupController {
      * @ahthor MddandPyy
      */
     @GetMapping("/getService")
-    public ExecuteResult<List<QueryServiceAO>> queryServiceInfo(@RequestParam(value="ServiceId",required=false) String serviceId,@RequestParam(value="ServiceGroup",required=false) String serviceGroup,@RequestParam(value="ServiceName",required=false) String serviceName){
+    public ExecuteResult<List<QueryServiceAO>> queryServiceInfo(@RequestParam(value="ServiceId",required=false) String serviceId,@RequestParam(value="ServiceGroup",required=false) String serviceGroup,@RequestParam(value="ServiceName",required=false) String serviceName) throws IOException {
         ExecuteResult<List<QueryServiceAO>> result = new ExecuteResult<>();
         if(!(serviceGroup==null || serviceGroup.trim().length()==0)){
             ServiceGroup group = serviceGroupDao.queryServiceByNameIsDel(serviceGroup);

@@ -125,7 +125,7 @@ String startDate, String endDate) throws ParseException;
 	 * @date 2019/11/11
 	 * @ahthor MddandPyy
 	 */
-	ExecuteResult<List<QueryServiceAO>> queryServiceInfo(String serviceId, String serviceGroup, String serviceName);
+	ExecuteResult<List<QueryServiceAO>> queryServiceInfo(String serviceId, String serviceGroup, String serviceName) throws IOException;
 
 	/**
 	 * 更新镜像

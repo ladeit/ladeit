@@ -839,7 +839,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	//由于此方入参很多，且查询的可能不止一个服务，因此无法使用自定义注解来进行权限控
 	//与前台沟通后，此方法只进行单笔查询。那就可以使用自定义注解控制
 	public ExecuteResult<List<QueryServiceAO>> queryServiceInfo(String serviceId, String serviceGroup,
-																String serviceName) {
+																String serviceName) throws IOException {
 		ExecuteResult<List<QueryServiceAO>> result = new ExecuteResult<List<QueryServiceAO>>();
 		List<QueryServiceAO> queryInfo = new ArrayList<QueryServiceAO>();
 		List<com.ladeit.pojo.doo.Service> services = serviceDao.queryServiceListByParam(serviceId, serviceGroup,
@@ -855,6 +855,8 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 				queryServiceAO.setRoleNum(userServiceRelation.getRoleNum());
 				//queryInfo.add(queryServiceAO);
 			}
+			ExecuteResult<Map<String,Long>> mapRes = this.resourceService.getPodsStatus(service.getId());
+			queryServiceAO.setPodStatus(mapRes.getResult());
 			//else if("admin".equals(user.getUsername())){
 			queryInfo.add(queryServiceAO);
 			//}
