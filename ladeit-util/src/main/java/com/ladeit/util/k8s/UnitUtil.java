@@ -58,8 +58,8 @@ public class UnitUtil {
 		String[] result = new String[2];
 		if ("cpu".equals(type)) {
 			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
-				result[0] = Integer.toString(quantity.getNumber().multiply(new BigDecimal(1000)).intValue());
-				result[1] = "C";
+				result[0] = Integer.toString(quantity.getNumber().intValue());
+				result[1] = "m";
 			}
 		}
 		if ("mem".equals(type)) {

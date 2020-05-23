@@ -85,7 +85,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * @version 1.0.0
 	 */
 	@Override
-	@Transactional(timeout = 1)
+	@Transactional
 	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException, InterruptedException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster clusterexit = clusterDao.getClusterOneByName(cluster.getK8sName());
@@ -97,7 +97,6 @@ public class ClusterServiceImpl implements ClusterService {
 		}
 		// 首先尝试是否能连接上集群，如果不行就直接返回错误
 		boolean notconnect = false;
-		Thread.sleep(5000);
 		try {
 			notconnect = this.clusterManager.connectTest(cluster.getK8sKubeconfig());
 		} catch (ClassCastException e) {
@@ -149,8 +148,9 @@ public class ClusterServiceImpl implements ClusterService {
 				Env env = new Env();
 				env.setId(namespace.getMetadata().getUid());
 				env.setClusterId(clusterId);
-				env.setNamespace(namespace.getMetadata().getNamespace());
+				env.setNamespace(namespace.getMetadata().getName());
 				env.setEnvName(namespace.getMetadata().getName());
+				env.setEnvTag(namespace.getMetadata().getName());
 				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(), cluster.getK8sKubeconfig());
 				for (V1ResourceQuota v1ResourceQuota:rqs) {
 					String [] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests.cpu"),"cpu");
@@ -166,7 +166,7 @@ public class ClusterServiceImpl implements ClusterService {
 					env.setMemLimit(StringUtils.isNotBlank(memlimit[0])?Integer.parseInt(memlimit[0]):null);
 					env.setMemLimitUnit(memlimit[1]);
 				}
-				//this.envService.createEnv(env);
+				this.envService.createEnv(env);
 			}
 		}
 		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
