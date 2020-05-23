@@ -42,6 +42,10 @@ public class MyEbeanServerFactory implements FactoryBean<EbeanServer> {
         config.setNamingConvention(new UnderscoreNamingConvention());
         config.setDefaultServer(true);
 
+        config.setRegister(true);
+        config.setAutoCommitMode(false);
+        config.setExpressionNativeIlike(true);
+
         // other programmatic configuration
         return EbeanServerFactory.create(config);
     }

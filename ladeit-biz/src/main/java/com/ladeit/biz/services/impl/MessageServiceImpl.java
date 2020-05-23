@@ -387,7 +387,7 @@ public class MessageServiceImpl implements MessageService {
 	 * 查询个人右上消息列表
 	 *
 	 * @param readFlag
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.ebean.SqlRow>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.ebean.SqlRow>>
 	 * @date 2020/3/14
 	 * @ahthor MddandPyy
 	 */
@@ -413,7 +413,7 @@ public class MessageServiceImpl implements MessageService {
 	 * 查询某条消息
 	 *
 	 * @param messageId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   io.ebean.SqlRow>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.ebean.SqlRow>>
 	 * @date 2020/3/14
 	 * @ahthor MddandPyy
 	 */
@@ -536,7 +536,7 @@ public class MessageServiceImpl implements MessageService {
 	 * 查询与当前登录人有关的service列表
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.ServiceAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ServiceAO>>
 	 * @date 2020/3/17
 	 * @ahthor MddandPyy
 	 */
@@ -564,7 +564,7 @@ public class MessageServiceImpl implements MessageService {
 	 * 查询group列表
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.ao.ServiceAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ServiceAO>>
 	 * @date 2020/3/17
 	 * @ahthor MddandPyy
 	 */

@@ -44,7 +44,13 @@ public class MessageDaoImpl implements MessageDao {
            sbf.append(" and t1.service_group_id =:serviceGroupId");
         }
         if(!(type==null || type.trim().length()==0)){
-            sbf.append(" and t1.type=:type");
+            if("normal".equals(type)){
+                sbf.append(" and t1.type!=110");
+            }else if("110".equals(type)){
+                sbf.append(" and t1.type=110");
+            }else{
+                sbf.append(" and t1.type=:type");
+            }
         }
         int start = (currentPage-1)*pageSize;
         int end = pageSize;
@@ -54,7 +60,9 @@ public class MessageDaoImpl implements MessageDao {
             sqlQuery.setParameter("serviceGroupId",serviceGroupId);
         }
         if(!(type==null || type.trim().length()==0)){
-            sqlQuery.setParameter("type",type);
+            if(!"normal".equals(type) && "110".equals(type)){
+                sqlQuery.setParameter("type",type);
+            }
         }
         List<SqlRow> list = sqlQuery.findList();
         return list;

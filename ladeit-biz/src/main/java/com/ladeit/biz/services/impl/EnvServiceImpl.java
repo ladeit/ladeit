@@ -94,8 +94,6 @@ public class EnvServiceImpl implements EnvService {
 			return result;
 		}
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
-		String envid = UUID.randomUUID().toString();
-		env.setId(envid);
 		env.setCreateAt(new Date());
 		env.setCreateBy(user.getUsername());
 		env.setCreateById(user.getId());
@@ -103,15 +101,15 @@ public class EnvServiceImpl implements EnvService {
 		this.envDao.createEnv(env);
 		UserEnvRelation userEnvRelation = new UserEnvRelation();
 		userEnvRelation.setId(UUID.randomUUID().toString());
-		userEnvRelation.setEnvId(envid);
+		userEnvRelation.setEnvId(env.getId());
 		userEnvRelation.setAccessLevel("R,W,X");
 		userEnvRelation.setUserId(user.getId());
 		userEnvRelation.setClusterId(env.getClusterId());
 		userEnvRelation.setCreateAt(new Date());
 		userEnvRelationDao.insert(userEnvRelation);
-		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
-		this.applyResourceQuota(env, cluster.getK8sKubeconfig());
-		this.eventHandler.put(envid, null);
+		//Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
+		//this.applyResourceQuota(env, cluster.getK8sKubeconfig());
+		this.eventHandler.put(env.getId(), null);
 		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
 		result.setResult(message);
 		return result;

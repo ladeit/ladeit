@@ -62,7 +62,7 @@ public class ClusterController {
 	@ApiOperation(value = "接入集群")
 	@PostMapping("")
 	public ExecuteResult<String> createCluster(@RequestBody ClusterAO bzK8sClusterAO) throws IOException,
-			ApiException {
+			ApiException, InterruptedException {
 		Cluster bzK8sClusterBO = new Cluster();
 		BeanUtils.copyProperties(bzK8sClusterAO, bzK8sClusterBO);
 		return this.k8sClusterService.createCluster(bzK8sClusterBO);

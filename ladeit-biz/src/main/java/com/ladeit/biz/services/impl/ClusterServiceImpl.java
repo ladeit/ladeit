@@ -4,6 +4,7 @@ import com.ladeit.biz.annotation.Authority;
 import com.ladeit.biz.dao.*;
 import com.ladeit.biz.manager.K8sClusterManager;
 import com.ladeit.biz.services.ClusterService;
+import com.ladeit.biz.services.EnvService;
 import com.ladeit.biz.utils.MessageUtils;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.common.Pager;
@@ -12,10 +13,12 @@ import com.ladeit.pojo.ao.*;
 import com.ladeit.pojo.doo.*;
 import com.ladeit.util.ListUtil;
 import com.ladeit.util.auth.TokenUtil;
+import com.ladeit.util.k8s.UnitUtil;
 import io.ebean.SqlRow;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.models.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +60,8 @@ public class ClusterServiceImpl implements ClusterService {
 	private ServiceGroupDao serviceGroupDao;
 	@Autowired
 	private MessageUtils messageUtils;
-
+	@Autowired
+	private EnvService envService;
 	/**
 	 * 通过id查询
 	 *
@@ -81,7 +85,8 @@ public class ClusterServiceImpl implements ClusterService {
 	 * @version 1.0.0
 	 */
 	@Override
-	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException {
+	@Transactional(timeout = 1)
+	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException, InterruptedException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster clusterexit = clusterDao.getClusterOneByName(cluster.getK8sName());
 		if (clusterexit != null) {
@@ -92,6 +97,7 @@ public class ClusterServiceImpl implements ClusterService {
 		}
 		// 首先尝试是否能连接上集群，如果不行就直接返回错误
 		boolean notconnect = false;
+		Thread.sleep(5000);
 		try {
 			notconnect = this.clusterManager.connectTest(cluster.getK8sKubeconfig());
 		} catch (ClassCastException e) {
@@ -129,9 +135,6 @@ public class ClusterServiceImpl implements ClusterService {
 		}
 		cluster.setInviteCode(inviteCode);
 		this.clusterDao.createCluster(cluster);
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
-		result.setResult(message);
-
 		//集群创建人作为集群的默认管理员
 		UserClusterRelation userClusterRelation = new UserClusterRelation();
 		userClusterRelation.setId(UUID.randomUUID().toString());
@@ -140,6 +143,35 @@ public class ClusterServiceImpl implements ClusterService {
 		userClusterRelation.setUserId(user.getId());
 		userClusterRelation.setCreateAt(new Date());
 		userClusterRelationDao.insert(userClusterRelation);
+		ExecuteResult<List<V1Namespace>> namespaces = this.clusterManager.listNamespace(cluster.getK8sKubeconfig());
+		if(namespaces.getResult()!=null && !namespaces.getResult().isEmpty()){
+			for (V1Namespace namespace:namespaces.getResult()) {
+				Env env = new Env();
+				env.setId(namespace.getMetadata().getUid());
+				env.setClusterId(clusterId);
+				env.setNamespace(namespace.getMetadata().getNamespace());
+				env.setEnvName(namespace.getMetadata().getName());
+				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(), cluster.getK8sKubeconfig());
+				for (V1ResourceQuota v1ResourceQuota:rqs) {
+					String [] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests.cpu"),"cpu");
+					String [] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests.memory"),"mem");
+					String [] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),"cpu");
+					String [] memlimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"),"mem");
+					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0])?Integer.parseInt(cpurequest[0]):null);
+					env.setCpuRequestUnit(cpurequest[1]);
+					env.setMemRequest(StringUtils.isNotBlank(memrequest[0])?Integer.parseInt(memrequest[0]):null);
+					env.setMemRequestUnit(memrequest[1]);
+					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0])?Integer.parseInt(cpulimit[0]):null);
+					env.setCpuLimitUnit(cpulimit[1]);
+					env.setMemLimit(StringUtils.isNotBlank(memlimit[0])?Integer.parseInt(memlimit[0]):null);
+					env.setMemLimitUnit(memlimit[1]);
+				}
+				//this.envService.createEnv(env);
+			}
+		}
+		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		result.setResult(message);
+
 		return result;
 	}
 

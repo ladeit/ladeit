@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @program: ladeit
@@ -122,5 +123,7 @@ public class 	QueryServiceAO {
 	private List<ImageAO> imageAOS;
 
 	private List<MessageAO> messageAOS;
+
+	private Map<String,Long> podStatus;
 
 }

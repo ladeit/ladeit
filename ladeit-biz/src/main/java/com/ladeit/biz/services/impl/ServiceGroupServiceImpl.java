@@ -93,6 +93,8 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	private UserSlackRelationDao userSlackRelationDao;
 	@Autowired
 	private MessageUtils messageUtils;
+	@Autowired
+	private ResourceService resourceService;
 
 	/**
 	 * 创建服务组
@@ -115,7 +117,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		ServiceGroup group = serviceGroupDao.queryServiceByNameIsDel(serviceGroup.getName());
 		if (group != null) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0020", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0020", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -131,7 +133,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			inviteCode = TokenUtil.createToken(serviceGroup.getName() + "invitecode" + System.currentTimeMillis());
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0006", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0006", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -144,7 +146,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			token = TokenUtil.createToken(serviceGroup.getName() + System.currentTimeMillis());
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0021", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0021", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -165,7 +167,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		userServiceGroupRelation.setAccessLevel("RW");
 		userServiceGroupRelation.setCreateAt(date);
 		userServiceGroupRelationDao.insert(userServiceGroupRelation);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 
 		return result;
@@ -191,9 +193,9 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			result.setCode(Code.FAILED);
 			result.addErrorMessage("Invalid token");
 		} else {
-			String exitsServiceName= exitsService.getName();
-			String imageServiceName= addServiceAO.getServiceName();
-			if(!imageServiceName.equals(exitsServiceName)){
+			String exitsServiceName = exitsService.getName();
+			String imageServiceName = addServiceAO.getServiceName();
+			if (!imageServiceName.equals(exitsServiceName)) {
 				//String message = messageUtils.matchMessage("M0033", new Object[]{},Boolean.FALSE);
 				result.setCode(Code.FAILED);
 				result.addErrorMessage("Invalid service name or token");
@@ -233,7 +235,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			message.setLevel("NORMAL");
 			message.setServiceGroupId(exitsService.getServiceGroupId());
 			message.setMessageType(CommonConsant.MESSAGE_TYPE_S);
-			messageService.insertMessage(message,false);
+			messageService.insertMessage(message, false);
 			//调用推送slack消息接口
 			Map<String, Object> param = new HashMap();
 			param.put("serviceGroupId", exitsService.getServiceGroupId());
@@ -319,7 +321,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 							cluster.getK8sKubeconfig(), service.getName());
 				}
 			}
-			String messagestr = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+			String messagestr = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 			result.setResult(messagestr);
 			//消息创建
 			User user = (User) SecurityUtils.getSubject().getPrincipal();
@@ -335,7 +337,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			message.setLevel("NORMAL");
 			message.setServiceGroupId(group.getId());
 			message.setMessageType(CommonConsant.MESSAGE_TYPE_R);
-			messageService.insertMessage(message,true);
+			messageService.insertMessage(message, true);
 			//删除服务组下的所有人员的组权限和服务权限
 			List<UserServiceGroupRelation> userServiceGroupRelations =
 					userServiceGroupRelationDao.queryGrouprelationByGroupId(group.getId());
@@ -354,7 +356,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 				userServiceGroupRelationDao.delete(userServiceGroupRelation);
 			}
 		} else {
-			String messagestr = messageUtils.matchMessage("M0023", new Object[]{},Boolean.TRUE);
+			String messagestr = messageUtils.matchMessage("M0023", new Object[]{}, Boolean.TRUE);
 			result.setResult(messagestr);
 		}
 		return result;
@@ -536,6 +538,8 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 					if (serviceRelation != null) {
 						queryServiceAO.setRoleNum(serviceRelation.getRoleNum());
 					}
+					ExecuteResult<Map<String,Long>> mapRes = this.resourceService.getPodsStatus(service.getId());
+					queryServiceAO.setPodStatus(mapRes.getResult());
 					serviceAOList.add(queryServiceAO);
 				}
 			}
@@ -878,7 +882,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		Image image = imageDao.getImageById(imageId);
 		image.setVersion(imageAO.getVersion());
 		imageDao.update(image);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -1132,7 +1136,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		userServiceGroupRelation.setId(UUID.randomUUID().toString());
 		userServiceGroupRelation.setCreateAt(new Date());
 		userServiceGroupRelationDao.insert(userServiceGroupRelation);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		//新人进组，添加组内消息
@@ -1178,7 +1182,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			//addUserEnvRelation(userServiceGroupRelationAO.getServiceGroupId(),userServiceGroupRelationAO.getUserId
 			// ());
 		}
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -1199,7 +1203,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		UserServiceGroupRelation serviceGroupRelation = userServiceGroupRelationDao.getGrouprelation(user.getId(),
 				serviceGroup.getId());
 		if (serviceGroupRelation != null) {
-			String message = messageUtils.matchMessage("M0024", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0024", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 		} else {
 			UserServiceGroupRelation userServiceGroupRelation = new UserServiceGroupRelation();
@@ -1209,7 +1213,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			userServiceGroupRelation.setAccessLevel("R");
 			userServiceGroupRelation.setCreateAt(new Date());
 			userServiceGroupRelationDao.insert(userServiceGroupRelation);
-			String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 			//新人进组，添加组内消息
 			insertJoinGroupMessage(user.getId(), serviceGroup.getId(), user.getId());
@@ -1246,7 +1250,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		message.setServiceGroupId(serviceGroupId);
 		message.setTarget_user(userId);
 		message.setMessageType(CommonConsant.MESSAGE_TYPE_R);
-		messageService.insertMessage(message,true);
+		messageService.insertMessage(message, true);
 	}
 
 	/**
@@ -1351,7 +1355,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		userServiceGroupRelationDao.delete(userServiceGroupRelation);
 		// Successfully.
 		//result.setResult("删除人员成功");
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -1393,7 +1397,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		userServiceGroupRelationDao.delete(userServiceGroupRelation);
 		// Successfully.
 		//result.setResult("操作成功");
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -1424,7 +1428,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		message.setServiceGroupId(serviceGroupId);
 		message.setTarget_user(userId);
 		message.setMessageType(CommonConsant.MESSAGE_TYPE_R);
-		messageService.insertMessage(message,true);
+		messageService.insertMessage(message, true);
 	}
 
 
@@ -1493,7 +1497,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 			token = TokenUtil.createToken(serviceGroup.getName() + System.currentTimeMillis());
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0021", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0021", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -1548,7 +1552,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		ServiceGroup serviceGroup = serviceGroupDao.queryServiceById(serviceGroupAO.getId());
 		serviceGroup.setName(serviceGroupAO.getName());
 		serviceGroupDao.update(serviceGroup);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -1603,7 +1607,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		message.setLevel("NORMAL");
 		message.setServiceGroupId(channelServiceGroup.getServicegroupId());
 		message.setMessageType(CommonConsant.MESSAGE_TYPE_R);
-		messageService.insertMessage(message,true);
+		messageService.insertMessage(message, true);
 
 		Map<String, Object> param = new HashMap<>();
 		String userId = user.getId();
@@ -1615,7 +1619,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 		messageService.insertSlackMessage(message);
 
 		channelServiceGroupDao.delete(channelServiceGroup);
-		String messagestr = messageUtils.matchMessage("M0025", new Object[]{},Boolean.TRUE);
+		String messagestr = messageUtils.matchMessage("M0025", new Object[]{}, Boolean.TRUE);
 		result.setResult(messagestr);
 		return result;
 	}
@@ -1653,7 +1657,8 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	 */
 	@Override
 	@SlackLogin
-	public ExecuteResult<BotQueryServiceAO> queryServiceGroupInfoBychannel(String slackUserId, String token,String channelId) {
+	public ExecuteResult<BotQueryServiceAO> queryServiceGroupInfoBychannel(String slackUserId, String token,
+																		String channelId) {
 		ExecuteResult<BotQueryServiceAO> result = new ExecuteResult<BotQueryServiceAO>();
 
 		BotQueryServiceAO botQueryServiceAO = new BotQueryServiceAO();
@@ -1691,13 +1696,13 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 //						ServiceAO.class);
 		ExecuteResult<BotQueryServiceAO> result = new ExecuteResult<BotQueryServiceAO>();
 		List<ServiceAO> serviceAOS = new ArrayList<>();
-		User user = SecurityUtils.getSubject()==null?null:(User) SecurityUtils.getSubject().getPrincipal();
+		User user = SecurityUtils.getSubject() == null ? null : (User) SecurityUtils.getSubject().getPrincipal();
 		for (com.ladeit.pojo.doo.Service service : list) {
-			if("admin".equals(user.getUsername())){
+			if ("admin".equals(user.getUsername())) {
 				ServiceAO serviceAO = new ServiceAO();
 				BeanUtils.copyProperties(service, serviceAO);
 				serviceAOS.add(serviceAO);
-			}else{
+			} else {
 				UserServiceRelation userServiceRelation = userServiceRelationDao.getServiceRelation(user.getId(),
 						service.getId());
 				if (userServiceRelation != null && userServiceRelation.getRoleNum().contains("R")) {
@@ -1726,7 +1731,8 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	 */
 	@Override
 	@SlackLogin
-	public ExecuteResult<ResultAO> joinServiceGroup(String slackUserId,String token,JoinServiceGroupAO joinServiceGroupAO) {
+	public ExecuteResult<ResultAO> joinServiceGroup(String slackUserId, String token,
+													JoinServiceGroupAO joinServiceGroupAO) {
 		ExecuteResult<ResultAO> result = new ExecuteResult<ResultAO>();
 		ResultAO resultAO = new ResultAO();
 		//String slackUserId = joinServiceGroupAO.getSlackUserId();
@@ -1775,7 +1781,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 	 */
 	@Override
 	@SlackLogin
-	public ExecuteResult<BotQueryImageAO> queryServiceImageInfo(String slackUserId,String token,String channelId,
+	public ExecuteResult<BotQueryImageAO> queryServiceImageInfo(String slackUserId, String token, String channelId,
 																String serviceName) {
 		ExecuteResult<BotQueryImageAO> result = new ExecuteResult<BotQueryImageAO>();
 		BotQueryImageAO botQueryImageAO = new BotQueryImageAO();

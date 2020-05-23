@@ -1,5 +1,7 @@
 package com.ladeit.util.k8s;
 
+import io.kubernetes.client.custom.Quantity;
+
 import java.math.BigDecimal;
 
 /**
@@ -52,6 +54,23 @@ public class UnitUtil {
 		return result;
 	}
 
+	public static String[] unitConverter(Quantity quantity, String type) {
+		String[] result = new String[2];
+		if ("cpu".equals(type)) {
+			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
+				result[0] = Integer.toString(quantity.getNumber().multiply(new BigDecimal(1000)).intValue());
+				result[1] = "C";
+			}
+		}
+		if ("mem".equals(type)) {
+			if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
+				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).intValue());
+				result[1] = "Mi";
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * 剥离数值和单位
 	 *
@@ -75,7 +94,7 @@ public class UnitUtil {
 		} else if (resource.endsWith("Gi")) {
 			numunit[0] = resource.replace("Gi", "");
 			numunit[1] = "Gi";
-		} else{
+		} else {
 			numunit[0] = resource;
 			numunit[1] = null;
 		}
