@@ -20,6 +20,7 @@ import com.ladeit.util.ListUtil;
 import com.ladeit.util.k8s.UnitUtil;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Namespace;
+import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ResourceQuota;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -83,6 +84,7 @@ public class EnvServiceImpl implements EnvService {
 	 * @version 1.0.0
 	 */
 	@Override
+	@Transactional
 	public ExecuteResult<String> createEnv(Env env) throws IOException, ApiException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Env k8sEnvDo = this.envDao.getEnvByClusterAndNamespace(env.getClusterId(),
@@ -107,8 +109,12 @@ public class EnvServiceImpl implements EnvService {
 		userEnvRelation.setClusterId(env.getClusterId());
 		userEnvRelation.setCreateAt(new Date());
 		userEnvRelationDao.insert(userEnvRelation);
-		//Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
-		//this.applyResourceQuota(env, cluster.getK8sKubeconfig());
+		V1Namespace namespace = new V1Namespace();
+		V1ObjectMeta meta = new V1ObjectMeta();
+		meta.setName(env.getNamespace());
+		namespace.setMetadata(meta);
+		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
+		this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
 		this.eventHandler.put(env.getId(), null);
 		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);

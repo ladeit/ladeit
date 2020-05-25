@@ -18,7 +18,7 @@ public interface K8sClusterManager {
 	 * @date 20-3-16
 	 * @version 1.0.0
 	 */
-	boolean connectTest(String config) throws ApiException ;
+	boolean connectTest(String config) throws ApiException;
 
 	/**
 	 * 查询namespace
@@ -41,7 +41,7 @@ public interface K8sClusterManager {
 	 * @version 1.0.0
 	 */
 	List<V1ReplicationController> getReplicationControllers(String serviceId, String k8sKubeconfig, String namespace) throws ApiException
-			 ;
+	;
 
 	/**
 	 * deployment
@@ -254,24 +254,38 @@ public interface K8sClusterManager {
 							 BigDecimal requestmemory, String config) throws ApiException;
 
 	/**
-	* 查看resourcequota
-	* @author falcomlife
-	* @date 20-3-25
-	* @version 1.0.0
-	* @return io.kubernetes.client.models.V1ResourceQuota
-	* @param namespace
-		 * @param config
-	*/
-	List<V1ResourceQuota> getResourceQuota(String namespace,String config) throws ApiException;
-
-	/**
-	 * 删除resourcequota
+	 * 查看resourcequota
+	 *
+	 * @param namespace
+	 * @param config
+	 * @return io.kubernetes.client.models.V1ResourceQuota
 	 * @author falcomlife
 	 * @date 20-3-25
 	 * @version 1.0.0
-	 * @return io.kubernetes.client.models.V1ResourceQuota
+	 */
+	List<V1ResourceQuota> getResourceQuota(String namespace, String config) throws ApiException;
+
+	/**
+	 * 删除resourcequota
+	 *
 	 * @param namespace
 	 * @param config
+	 * @return io.kubernetes.client.models.V1ResourceQuota
+	 * @author falcomlife
+	 * @date 20-3-25
+	 * @version 1.0.0
 	 */
-	void deleteResourceQuota(String name, String namespace,String config) throws ApiException;
+	void deleteResourceQuota(String name, String namespace, String config) throws ApiException;
+
+	/**
+	 * 创建namespace
+	 *
+	 * @param namespace
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	void createNamespace(V1Namespace namespace, String config) throws ApiException;
 }
+

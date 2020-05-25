@@ -89,7 +89,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 */
 	@Override
 	public List<V1ReplicationController> getReplicationControllers(String serviceId, String config,
-																   String namespace) throws ApiException {
+																String namespace) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		V1ReplicationControllerList replicationControllerList = coreApi.listNamespacedReplicationController(namespace,
 				null, null, null, null, null, null, null, null, null);
@@ -279,7 +279,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 * @version 1.0.0
 	 */
 	@Override
-	public List<V1Service> getServices(String serviceId, String config, String namespace) throws ApiException{
+	public List<V1Service> getServices(String serviceId, String config, String namespace) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		V1ServiceList v1ServiceList = coreApi.listNamespacedService(namespace,
 				null, null, null, null, null, null, null, null, null);
@@ -306,7 +306,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 * @version 1.0.0
 	 */
 	@Override
-	public List<V1beta1Ingress> getIngresses(String serviceId, String config, String namespace) throws ApiException{
+	public List<V1beta1Ingress> getIngresses(String serviceId, String config, String namespace) throws ApiException {
 		ExtensionsV1beta1Api extensionsV1beta1Api = (ExtensionsV1beta1Api) K8sClientUtil.get(config,
 				ExtensionsV1beta1Api.class);
 		V1beta1IngressList v1beta1IngressList = extensionsV1beta1Api.listNamespacedIngress(namespace,
@@ -443,7 +443,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 */
 	@Override
 	public List<V1PersistentVolumeClaim> getPersistentVolumeClaims(String serviceId, String config,
-																   String namespace) throws ApiException {
+																String namespace) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		V1PersistentVolumeClaimList v1PersistentVolumeClaims = coreApi.listNamespacedPersistentVolumeClaim(namespace,
 				null, null, null, null, null, null, null, null, null);
@@ -613,5 +613,20 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 			// TODO 抛异常，但是资源可以删除
 			log.error(e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * 创建namespace
+	 *
+	 * @param namespace
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	@Override
+	public void createNamespace(V1Namespace namespace, String config) throws ApiException {
+		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		coreApi.createNamespace(namespace,null,null,null);
 	}
 }

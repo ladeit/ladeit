@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -343,7 +344,7 @@ public class ClusterController {
 				result.setCode(Code.FAILED);
 				// Cluster name already exists.
 				//result.addErrorMessage("存在同名cluster");
-				String message = messageUtils.matchMessage("M0031", new Object[]{},Boolean.TRUE);
+				String message = messageUtils.matchMessage("M0031", new Object[]{}, Boolean.TRUE);
 				result.addErrorMessage(message);
 
 				return result;
@@ -392,7 +393,16 @@ public class ClusterController {
 		return k8sClusterService.getEnvService(clusterId);
 	}
 
-	@PutMapping("/{clusterId}/{namespace}")
+	/**
+	 * 同步namespace
+	 *
+	 * @param clusterId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	@PutMapping("/{clusterId}")
 	public ExecuteResult<String> refreshNamespace(@PathVariable("clusterId") String clusterId) throws IOException,
 			ApiException {
 		return this.k8sClusterService.refreshNamespace(clusterId);
