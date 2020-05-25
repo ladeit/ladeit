@@ -125,4 +125,15 @@ public interface EnvService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<List<ServiceAO>> getEnvService(String envId);
+
+	/**
+	 * 更新env，同步刷新的时候调用，主要更新配额
+	 *
+	 * @param env
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	void updateEnvQuota(Env env);
 }

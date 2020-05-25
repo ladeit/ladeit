@@ -392,4 +392,10 @@ public class ClusterController {
 		return k8sClusterService.getEnvService(clusterId);
 	}
 
+	@PutMapping("/{clusterId}/{namespace}")
+	public ExecuteResult<String> refreshNamespace(@PathVariable("clusterId") String clusterId) throws IOException,
+			ApiException {
+		return this.k8sClusterService.refreshNamespace(clusterId);
+	}
+
 }

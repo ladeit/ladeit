@@ -26,6 +26,7 @@ public interface EnvDao {
 
 	/**
 	 * 更新env
+	 *
 	 * @param env
 	 * @return void
 	 * @date 2019/12/4
@@ -58,44 +59,59 @@ public interface EnvDao {
 
 	/**
 	 * 查询envlist
+	 *
+	 * @param bzEnv
 	 * @author falcomlife
 	 * @date 19-9-27
 	 * @version 1.0.0
-	 * @param bzEnv
 	 */
 	List<Env> getEnvList(Env bzEnv);
 
 	/**
 	 * 根据envids查询env
+	 *
+	 * @param envIds
 	 * @author falcomlife
 	 * @date 19-9-27
 	 * @version 1.0.0
-	 * @param envIds
 	 */
 	List<Env> getEvnByIds(List<String> envIds);
 
 	/**
 	 * 查询单条env
+	 *
+	 * @param k8sEnvId
 	 * @author falcomlife
 	 * @date 19-10-9
 	 * @version 1.0.0
-	 * @param k8sEnvId
 	 */
 	Env getEnvById(String k8sEnvId);
 
 	/**
 	 * 根绝cluster和namespace查询
+	 *
+	 * @param k8sClusterId
+	 * @param namespace
 	 * @author falcomlife
 	 * @date 19-10-10
 	 * @version 1.0.0
-	 * @param k8sClusterId
-	 * @param namespace
 	 */
 	Env getEnvByClusterAndNamespace(String k8sClusterId, String namespace);
 
-    List<Env> getAllEnv();
+	List<Env> getAllEnv();
 
 	List<Env> getEnvListByClusterId(String clusterId);
 
 	Env getEnvByClusterAndEnvId(String clusterId, String envId);
+
+	/**
+	 * 更新env，同步刷新的时候调用，主要更新配额
+	 *
+	 * @param env
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	void updateEnvQuota(Env env);
 }

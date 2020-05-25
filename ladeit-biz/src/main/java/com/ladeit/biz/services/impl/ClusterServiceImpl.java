@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @program: ladeit
@@ -62,6 +64,7 @@ public class ClusterServiceImpl implements ClusterService {
 	private MessageUtils messageUtils;
 	@Autowired
 	private EnvService envService;
+
 	/**
 	 * 通过id查询
 	 *
@@ -86,12 +89,13 @@ public class ClusterServiceImpl implements ClusterService {
 	 */
 	@Override
 	@Transactional
-	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException, InterruptedException {
+	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException,
+			InterruptedException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster clusterexit = clusterDao.getClusterOneByName(cluster.getK8sName());
 		if (clusterexit != null) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0003",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0003", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -101,18 +105,18 @@ public class ClusterServiceImpl implements ClusterService {
 			notconnect = this.clusterManager.connectTest(cluster.getK8sKubeconfig());
 		} catch (ClassCastException e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0004",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0004", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0005",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0005", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
 		if (notconnect) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0005",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0005", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -128,7 +132,7 @@ public class ClusterServiceImpl implements ClusterService {
 			inviteCode = TokenUtil.createToken("clusterinvitecode" + System.currentTimeMillis());
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0006",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0006", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -143,33 +147,38 @@ public class ClusterServiceImpl implements ClusterService {
 		userClusterRelation.setCreateAt(new Date());
 		userClusterRelationDao.insert(userClusterRelation);
 		ExecuteResult<List<V1Namespace>> namespaces = this.clusterManager.listNamespace(cluster.getK8sKubeconfig());
-		if(namespaces.getResult()!=null && !namespaces.getResult().isEmpty()){
-			for (V1Namespace namespace:namespaces.getResult()) {
+		if (namespaces.getResult() != null && !namespaces.getResult().isEmpty()) {
+			for (V1Namespace namespace : namespaces.getResult()) {
 				Env env = new Env();
 				env.setId(namespace.getMetadata().getUid());
 				env.setClusterId(clusterId);
 				env.setNamespace(namespace.getMetadata().getName());
 				env.setEnvName(namespace.getMetadata().getName());
-				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(), cluster.getK8sKubeconfig());
-				for (V1ResourceQuota v1ResourceQuota:rqs) {
-					String [] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests.cpu"),"cpu");
-					String [] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests.memory"),"mem");
-					String [] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),"cpu");
-					String [] memlimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"),"mem");
-					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0])?Integer.parseInt(cpurequest[0]):null);
+				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(),
+						cluster.getK8sKubeconfig());
+				for (V1ResourceQuota v1ResourceQuota : rqs) {
+					String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".cpu"), "cpu");
+					String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".memory"), "mem");
+					String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+							"cpu");
+					String[] memlimit =
+							UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
 					env.setCpuRequestUnit(cpurequest[1]);
-					env.setMemRequest(StringUtils.isNotBlank(memrequest[0])?Integer.parseInt(memrequest[0]):null);
+					env.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
 					env.setMemRequestUnit(memrequest[1]);
-					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0])?Integer.parseInt(cpulimit[0]):null);
+					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
 					env.setCpuLimitUnit(cpulimit[1]);
-					env.setMemLimit(StringUtils.isNotBlank(memlimit[0])?Integer.parseInt(memlimit[0]):null);
+					env.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
 					env.setMemLimitUnit(memlimit[1]);
 					env.setResourceQuota(true);
 				}
 				this.envService.createEnv(env);
 			}
 		}
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 
 		return result;
@@ -192,18 +201,18 @@ public class ClusterServiceImpl implements ClusterService {
 			notconnect = this.clusterManager.connectTest(bzK8sClusterBO.getK8sKubeconfig());
 		} catch (ClassCastException e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0004",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0004", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		} catch (Exception e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0005",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0005", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
 		if (notconnect) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0005",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0005", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -212,7 +221,7 @@ public class ClusterServiceImpl implements ClusterService {
 		cluster.setK8sName(bzK8sClusterBO.getK8sName());
 		cluster.setK8sKubeconfig(bzK8sClusterBO.getK8sKubeconfig());
 		clusterDao.update(cluster);
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -273,7 +282,7 @@ public class ClusterServiceImpl implements ClusterService {
 			resultTem = this.clusterManager.listNamespace(clusterbo.getResult().getK8sKubeconfig());
 		} catch (NullPointerException e) {
 			result.setCode(Code.FAILED);
-			String message = messageUtils.matchMessage("M0007",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0007", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -461,7 +470,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群下人员信息(不分页)
 	 *
 	 * @param clusterId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.UserClusterRelationAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.UserClusterRelationAO>>
 	 * @date 2020/2/2
 	 * @ahthor MddandPyy
 	 */
@@ -501,7 +510,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询要加入的人员信息
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.SeriveGroupUserAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.SeriveGroupUserAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -550,10 +559,10 @@ public class ClusterServiceImpl implements ClusterService {
 			userClusterRelation.setId(UUID.randomUUID().toString());
 			userClusterRelation.setCreateAt(new Date());
 			userClusterRelationDao.insert(userClusterRelation);
-			String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 		} else {
-			String message = messageUtils.matchMessage("M0008",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0008", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 		}
 		return result;
@@ -591,7 +600,7 @@ public class ClusterServiceImpl implements ClusterService {
 		UserClusterRelation userClusterRelationold = userClusterRelationDao.queryByClusterIdAndUserId(cluster.getId(),
 				user.getId());
 		if (userClusterRelationold != null) {
-			String message = messageUtils.matchMessage("M0008",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0008", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 		} else {
 			UserClusterRelation userClusterRelation = new UserClusterRelation();
@@ -601,7 +610,7 @@ public class ClusterServiceImpl implements ClusterService {
 			userClusterRelation.setAccessLevel("R");
 			userClusterRelation.setClusterId(cluster.getId());
 			userClusterRelationDao.insert(userClusterRelation);
-			String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 			result.setResult(message);
 		}
 		return result;
@@ -628,7 +637,7 @@ public class ClusterServiceImpl implements ClusterService {
 			userClusterRelation.setCreateAt(new Date());
 			userClusterRelationDao.insert(userClusterRelation);
 		}
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -723,7 +732,7 @@ public class ClusterServiceImpl implements ClusterService {
 			}
 		}
 		userClusterRelationDao.delete(userClusterRelation);
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -732,7 +741,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)根据当前登录人
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -745,7 +754,7 @@ public class ClusterServiceImpl implements ClusterService {
 		List<UserClusterRelation> relist = userClusterRelationDao.queryClusterRelationByUserId(userId);
 		for (UserClusterRelation userClusterRelation : relist) {
 			Cluster cluster = clusterDao.getClusterById(userClusterRelation.getClusterId());
-			if(cluster!=null){
+			if (cluster != null) {
 				list.add(cluster);
 			}
 		}
@@ -757,7 +766,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
@@ -789,7 +798,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
@@ -880,7 +889,6 @@ public class ClusterServiceImpl implements ClusterService {
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2020/3/17
 	 * @ahthor MddandPyy
-	 *
 	 */
 	@Override
 	@Transactional
@@ -906,7 +914,7 @@ public class ClusterServiceImpl implements ClusterService {
 		for (UserClusterRelation userClusterRelation : userClusterRelations) {
 			userClusterRelationDao.delete(userClusterRelation);
 		}
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -938,7 +946,7 @@ public class ClusterServiceImpl implements ClusterService {
 			}
 		}
 		userClusterRelationDao.delete(userClusterRelation);
-		String message = messageUtils.matchMessage("M0100",new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -969,6 +977,144 @@ public class ClusterServiceImpl implements ClusterService {
 			}
 		}
 		result.setResult(serviceAOS);
+		return result;
+	}
+
+	/**
+	 * 更新集群下的命名空间
+	 *
+	 * @param clusterId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> refreshNamespace(String clusterId) throws IOException, ApiException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		Cluster cluster = this.clusterDao.getClusterById(clusterId);
+		List<Env> envs = this.envDao.getEnvListByClusterId(clusterId);
+		ExecuteResult<List<V1Namespace>> namespaces = this.clusterManager.listNamespace(cluster.getK8sKubeconfig());
+		if (envs == null || envs.isEmpty()) {
+			for (V1Namespace namespace : namespaces.getResult()) {
+				Env env = new Env();
+				env.setId(namespace.getMetadata().getUid());
+				env.setClusterId(clusterId);
+				env.setNamespace(namespace.getMetadata().getName());
+				env.setEnvName(namespace.getMetadata().getName());
+				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(),
+						cluster.getK8sKubeconfig());
+				for (V1ResourceQuota v1ResourceQuota : rqs) {
+					String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".cpu"), "cpu");
+					String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".memory"), "mem");
+					String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+							"cpu");
+					String[] memlimit =
+							UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
+					env.setCpuRequestUnit(cpurequest[1]);
+					env.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
+					env.setMemRequestUnit(memrequest[1]);
+					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
+					env.setCpuLimitUnit(cpulimit[1]);
+					env.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
+					env.setMemLimitUnit(memlimit[1]);
+					env.setResourceQuota(true);
+				}
+				this.envService.createEnv(env);
+			}
+		} else if (namespaces.getResult() == null || namespaces.getResult().isEmpty()) {
+			for (Env env : envs) {
+				this.envService.deleteEnv(env.getId(), null);
+			}
+		} else {
+			List<String> envsOld =
+					new ArrayList<>(envs.stream().map(e -> e.getNamespace()).collect(Collectors.toList()));
+			List<String> namespacesOld =
+					new ArrayList<>(namespaces.getResult().stream().map(m -> m.getMetadata().getName()).collect(Collectors.toList()));
+			List<String> envsNew = new ArrayList<>(envsOld);
+			List<String> namespacesNew = new ArrayList<>(namespacesOld);
+
+			Map<String, Env> envMaps = envs.stream().collect(Collectors.toMap(Env::getNamespace, Function.identity()));
+			Map<String, V1Namespace> namespaceMap = new HashMap<>();
+			for(V1Namespace namespace:namespaces.getResult()){
+				namespaceMap.put(namespace.getMetadata().getName(),namespace);
+			}
+			// 取envs有namespaces没有的差集
+			envsOld.removeAll(namespacesNew);
+			// 取namespaces有envs没有的差集
+			namespacesOld.removeAll(envsNew);
+			// 取交集
+			envsNew.retainAll(namespacesNew);
+			// 针对k8s已经中删除的namespace，env做逻辑删除
+			for (String name : envsOld) {
+				this.envService.deleteEnv(envMaps.get(name).getId(), null);
+			}
+			// 针对k8s中新加的namespace，env做新增
+			for (String name : namespacesOld) {
+				V1Namespace namespace = namespaceMap.get(name);
+				Env env = new Env();
+				env.setId(namespace.getMetadata().getUid());
+				env.setClusterId(clusterId);
+				env.setNamespace(namespace.getMetadata().getName());
+				env.setEnvName(namespace.getMetadata().getName());
+				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(),
+						cluster.getK8sKubeconfig());
+				for (V1ResourceQuota v1ResourceQuota : rqs) {
+					String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".cpu"), "cpu");
+					String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".memory"), "mem");
+					String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+							"cpu");
+					String[] memlimit =
+							UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
+					env.setCpuRequestUnit(cpurequest[1]);
+					env.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
+					env.setMemRequestUnit(memrequest[1]);
+					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
+					env.setCpuLimitUnit(cpulimit[1]);
+					env.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
+					env.setMemLimitUnit(memlimit[1]);
+					env.setResourceQuota(true);
+				}
+				this.envService.createEnv(env);
+			}
+			// 针对k8s中仍然存在的，对env信息进行更新
+			for (String name : envsNew) {
+				V1Namespace namespace = namespaceMap.get(name);
+				List<V1ResourceQuota> rqs = this.clusterManager.getResourceQuota(namespace.getMetadata().getName(),
+						cluster.getK8sKubeconfig());
+				Env env = new Env();
+				env.setId(namespace.getMetadata().getUid());
+				env.setClusterId(clusterId);
+				env.setNamespace(namespace.getMetadata().getName());
+				env.setEnvName(namespace.getMetadata().getName());
+				for (V1ResourceQuota v1ResourceQuota : rqs) {
+					String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".cpu"), "cpu");
+					String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".memory"), "mem");
+					String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+							"cpu");
+					String[] memlimit =
+							UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+					env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
+					env.setCpuRequestUnit(cpurequest[1]);
+					env.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
+					env.setMemRequestUnit(memrequest[1]);
+					env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
+					env.setCpuLimitUnit(cpulimit[1]);
+					env.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
+					env.setMemLimitUnit(memlimit[1]);
+					env.setResourceQuota(true);
+				}
+				this.envService.updateEnvQuota(env);
+			}
+		}
 		return result;
 	}
 

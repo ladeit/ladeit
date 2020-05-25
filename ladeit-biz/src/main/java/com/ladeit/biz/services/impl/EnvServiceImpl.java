@@ -89,7 +89,7 @@ public class EnvServiceImpl implements EnvService {
 				env.getNamespace());
 		if (k8sEnvDo != null) {
 			result.setCode(Code.ALREADY_USED);
-			String message = messageUtils.matchMessage("M0009", new Object[]{},Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0009", new Object[]{}, Boolean.TRUE);
 			result.addErrorMessage(message);
 			return result;
 		}
@@ -110,7 +110,7 @@ public class EnvServiceImpl implements EnvService {
 		//Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
 		//this.applyResourceQuota(env, cluster.getK8sKubeconfig());
 		this.eventHandler.put(env.getId(), null);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -150,7 +150,7 @@ public class EnvServiceImpl implements EnvService {
 		this.envDao.updateEnv(env);
 		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
 		this.applyResourceQuota(env, cluster.getK8sKubeconfig());
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -224,7 +224,7 @@ public class EnvServiceImpl implements EnvService {
 			envDao.updateEnv(env);
 		}
 		this.eventHandler.remove(envId);
-		String message = messageUtils.matchMessage("M0100", new Object[]{},Boolean.TRUE);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);
 		return result;
 	}
@@ -398,5 +398,19 @@ public class EnvServiceImpl implements EnvService {
 		}
 		result.setResult(serviceAOS);
 		return result;
+	}
+
+	/**
+	 * 更新env，同步刷新的时候调用，主要更新配额
+	 *
+	 * @param env
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	@Override
+	public void updateEnvQuota(Env env) {
+		this.envDao.updateEnvQuota(env);
 	}
 }

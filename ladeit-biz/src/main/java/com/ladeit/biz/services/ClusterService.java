@@ -271,4 +271,15 @@ public interface ClusterService {
 	 * @ahthor MddandPyy
 	 */
 	ExecuteResult<List<ServiceAO>> getEnvService(String clusterId);
+
+	/**
+	 * 更新集群下的命名空间
+	 *
+	 * @param clusterId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-25
+	 * @version 1.0.0
+	 */
+	ExecuteResult<String> refreshNamespace(String clusterId) throws IOException, ApiException;
 }
