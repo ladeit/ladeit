@@ -3,6 +3,8 @@ package com.ladeit.util.k8s;
 import io.kubernetes.client.custom.Quantity;
 
 import java.math.BigDecimal;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @program: ladeit
@@ -56,18 +58,33 @@ public class UnitUtil {
 
 	public static String[] unitConverter(Quantity quantity, String type) {
 		String[] result = new String[2];
-		if ("cpu".equals(type)) {
-			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
-				result[0] = Integer.toString(quantity.getNumber().intValue());
-				result[1] = "m";
-			}
-		}
-		if ("mem".equals(type)) {
-			if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
-				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).intValue());
-				result[1] = "Mi";
-			}
-		}
+		String regEx="[^0-9]";
+		Pattern p = Pattern.compile(regEx);
+		Matcher m = p.matcher(quantity.toSuffixedString());
+		result[0] = m.replaceAll("").trim();
+		result[1] = quantity.toSuffixedString().replace(result[0],"");
+
+//
+//		if ("cpu".equals(type)) {
+//			System.out.println(quantity.toSuffixedString());
+//			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
+////				result[0] = Integer.toString(quantity.getNumber().multiply(new BigDecimal(1000)).intValue());
+////				result[1] = "m";
+//			}else if(quantity.getFormat() == Quantity.Format.BINARY_SI){
+////				result[0] = Integer.toString(quantity.getNumber().intValue());
+////				result[1] = "m";
+//			}
+//		}
+//		if ("mem".equals(type)) {
+//			System.out.println(quantity.toSuffixedString());
+//			if(quantity.getFormat() == Quantity.Format.DECIMAL_SI){
+////				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1000)).intValue());
+////				result[1] = "m";
+//			}else if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
+////				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).intValue());
+////				result[1] = "Mi";
+//			}
+//		}
 		return result;
 	}
 

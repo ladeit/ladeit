@@ -84,7 +84,7 @@ public class LogWebSocket {
 		httpClient.setWriteTimeout(1800, TimeUnit.SECONDS);
 		ConnectionPool connectionPool = new ConnectionPool(10, 1000 * 60 * 5, TimeUnit.MILLISECONDS);
 		httpClient.setConnectionPool(connectionPool);
-		InputStream is = new PodLogs().streamNamespacedPodLog(env.getNamespace(), pod, container);
+		InputStream is = new PodLogs().streamNamespacedPodLog(env.getNamespace(), pod, container,null,200,false);
 		InputStreamReader isr = new InputStreamReader(is, "UTF-8");
 		// 使用 BufferedReader 进行读取
 		BufferedReader bufferedReader = new BufferedReader(isr);
