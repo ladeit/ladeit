@@ -281,4 +281,25 @@ public class UserServiceImpl implements UserService {
 		}
 		return result;
 	}
+
+	/**
+	 * 判断admin是否修改过密码
+	 *
+	 * @param
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> isFirst() {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		User user = this.userDao.getUserByUsername("admin");
+		if(user.getPassword()==null){
+			result.setResult("havepassword");
+		}else{
+			result.setResult("nopassword");
+		}
+		return result;
+	}
 }

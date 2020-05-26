@@ -334,8 +334,8 @@ CREATE TABLE `user` (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (UUID(), NULL, NULL, 'ladeit-bot', NULL, '1ed919b4fe39fb389562eb753560350f8b3fbb7853ed2c55f990db408273a2c4', '12345678901234567890123456789012', SYSDATE(), NULL, 0, 0);
-INSERT INTO `user` VALUES (UUID(), NULL, NULL, 'admin', NULL, '1ed919b4fe39fb389562eb753560350f8b3fbb7853ed2c55f990db408273a2c4', '12345678901234567890123456789012', SYSDATE(), NULL, NULL, 0);
+INSERT INTO `user` VALUES (UUID(), NULL, NULL, 'ladeit-bot', NULL, NULL, NULL, SYSDATE(), NULL, 0, 0);
+INSERT INTO `user` VALUES (UUID(), NULL, NULL, 'admin', NULL, NULL, NULL, SYSDATE(), NULL, NULL, 0);
 
 -- ----------------------------
 -- Table structure for `user_cluster_relation`

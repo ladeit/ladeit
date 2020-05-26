@@ -231,5 +231,16 @@ public class UserController {
 		return userService.unbindSlackUser(userSlackRelationId);
 	}
 
-
+	/**
+	* 判断admin是否已经修改过密码
+	* @author falcomlife
+	* @date 20-5-26
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param
+	*/
+	@GetMapping("/admin")
+	public ExecuteResult<String> isFirst(){
+		return this.userService.isFirst();
+	}
 }
