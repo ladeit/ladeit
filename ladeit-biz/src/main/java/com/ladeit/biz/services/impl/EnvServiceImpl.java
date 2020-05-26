@@ -86,6 +86,30 @@ public class EnvServiceImpl implements EnvService {
 	@Override
 	@Transactional
 	public ExecuteResult<String> createEnv(Env env) throws IOException, ApiException {
+		ExecuteResult<String> result = this.createEnvWithoutK8s(env);
+		V1Namespace namespace = new V1Namespace();
+		V1ObjectMeta meta = new V1ObjectMeta();
+		meta.setName(env.getNamespace());
+		namespace.setMetadata(meta);
+		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
+		this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
+		this.eventHandler.put(env.getId(), null);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
+		result.setResult(message);
+		return result;
+	}
+
+	/**
+	* 创建一个env不创建k8s资源
+	* @author falcomlife
+	* @date 20-5-26
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param env
+	*/
+	@Override
+	@Transactional
+	public ExecuteResult<String> createEnvWithoutK8s(Env env) throws ApiException, IOException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Env k8sEnvDo = this.envDao.getEnvByClusterAndNamespace(env.getClusterId(),
 				env.getNamespace());
@@ -109,12 +133,6 @@ public class EnvServiceImpl implements EnvService {
 		userEnvRelation.setClusterId(env.getClusterId());
 		userEnvRelation.setCreateAt(new Date());
 		userEnvRelationDao.insert(userEnvRelation);
-		V1Namespace namespace = new V1Namespace();
-		V1ObjectMeta meta = new V1ObjectMeta();
-		meta.setName(env.getNamespace());
-		namespace.setMetadata(meta);
-		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
-		this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
 		this.eventHandler.put(env.getId(), null);
 		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);

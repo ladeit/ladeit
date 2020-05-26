@@ -1081,7 +1081,7 @@ public class ClusterServiceImpl implements ClusterService {
 					env.setMemLimitUnit(memlimit[1]);
 					env.setResourceQuota(true);
 				}
-				this.envService.createEnv(env);
+				this.envService.createEnvWithoutK8s(env);
 			}
 			// 针对k8s中仍然存在的，对env信息进行更新
 			for (String name : envsNew) {

@@ -6,6 +6,7 @@ import com.ladeit.pojo.ao.EnvAO;
 import com.ladeit.pojo.ao.ServiceAO;
 import com.ladeit.pojo.doo.Env;
 import io.kubernetes.client.ApiException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -41,6 +42,9 @@ public interface EnvService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<String> createEnv(Env env) throws IOException, ApiException;
+
+	@Transactional
+	ExecuteResult<String> createEnvWithoutK8s(Env env) throws ApiException, IOException;
 
 	/**
 	 * 更新env
