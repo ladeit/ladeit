@@ -11,6 +11,7 @@ import com.ladeit.biz.services.UserService;
 import com.ladeit.pojo.doo.User;
 import com.ladeit.util.auth.PasswordUtil;
 import com.ladeit.util.git.TokenUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
@@ -93,6 +94,8 @@ public class ShiroRealmConfig {
 				User user = userService.getUserByUsername(username);
 				if (user == null) {
 					throw new UnknownAccountException("user not found");
+				} else if (StringUtils.isBlank(user.getPassword())) {
+					throw new UnknownAccountException("ladeit-bot can't login");
 				}
 				user.setLan(lan); // zh_CN en_US
 				boolean flag = false;

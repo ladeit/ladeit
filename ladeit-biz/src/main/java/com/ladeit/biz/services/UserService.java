@@ -44,7 +44,7 @@ public interface UserService {
 	 * 查询当前登录人活动列表
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager   <   com.ladeit.pojo.ao.OperationAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.OperationAO>>
 	 * @date 2019/11/29
 	 * @ahthor MddandPyy
 	 */
@@ -134,4 +134,16 @@ public interface UserService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<String> isFirst();
+
+	/**
+	 * 更新admin密码
+	 *
+	 * @param user
+	 * @param newPassword
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
+	ExecuteResult<String> updateAdminPassword(User user, String newPassword) throws NoSuchAlgorithmException;
 }

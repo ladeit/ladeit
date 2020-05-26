@@ -33,7 +33,6 @@ public class PasswordUtil {
 		//2.明文和随机盐一起SHA256运算102400次
 		result[0] = salt;
 		result[1] = algorithm(plain, salt);
-		;
 		return result;
 	}
 

@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
 	 * 查询当前登录人活动列表
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager   <   com.ladeit.pojo.ao.OperationAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                               <                                                               com.ladeit.pojo.ao.OperationAO>>
 	 * @date 2019/11/29
 	 * @ahthor MddandPyy
 	 */
@@ -295,11 +295,32 @@ public class UserServiceImpl implements UserService {
 	public ExecuteResult<String> isFirst() {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		User user = this.userDao.getUserByUsername("admin");
-		if(user.getPassword()==null){
+		if (user.getPassword() == null) {
 			result.setResult("havepassword");
-		}else{
+		} else {
 			result.setResult("nopassword");
 		}
+		return result;
+	}
+
+	/**
+	 * 更新admin密码
+	 *
+	 * @param user
+	 * @param newPassword
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> updateAdminPassword(User user, String newPassword) throws NoSuchAlgorithmException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		User userInDatabase = this.getUserByUsername("admin");
+		String[] password = PasswordUtil.encode(newPassword);
+		userInDatabase.setSalt(password[0]);
+		userInDatabase.setPassword(password[1]);
+		this.userDao.update(user);
 		return result;
 	}
 }

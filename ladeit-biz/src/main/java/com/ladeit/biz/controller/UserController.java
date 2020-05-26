@@ -166,6 +166,22 @@ public class UserController {
 	}
 
 	/**
+	 * admin更新密码
+	 *
+	 * @param userAO
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-16
+	 * @version 1.0.0
+	 */
+	@PutMapping("/admin/password")
+	public ExecuteResult<String> updateAdminPassword(@RequestBody UserAO userAO) throws NoSuchAlgorithmException {
+		User user = new User();
+		BeanUtils.copyProperties(userAO, user);
+		return userService.updateAdminPassword(user, userAO.getNewPassword());
+	}
+
+	/**
 	 * 更新用户信息
 	 *
 	 * @param userAO
@@ -243,4 +259,6 @@ public class UserController {
 	public ExecuteResult<String> isFirst(){
 		return this.userService.isFirst();
 	}
+
+
 }
