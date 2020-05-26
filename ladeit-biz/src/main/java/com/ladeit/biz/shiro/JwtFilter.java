@@ -74,7 +74,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
 		if(!url.startsWith("/api/v1")){
 			return Boolean.TRUE;
 		}
-		if ("/api/v1/user".equals(url) || "/api/v1/user/admin".equals(url) || url.equals("/api/v1/service/image") || url.contains("/api/v1/slack") || url.contains("/api/v1/event") || url.startsWith("/api/v1/log")) {
+		if ("/api/v1/user".equals(url) || "/api/v1/user/admin".equals(url) || "/api/v1/user/admin/password".equals(url) || url.equals("/api/v1/service/image") || url.contains("/api/v1/slack") || url.contains("/api/v1/event") || url.startsWith("/api/v1/log")) {
 			return Boolean.TRUE;
 		}
 		// 如果是websocket，放过
