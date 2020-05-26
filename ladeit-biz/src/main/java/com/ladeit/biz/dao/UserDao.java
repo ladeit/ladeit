@@ -78,4 +78,15 @@ public interface UserDao {
 	 * @version 1.0.0
 	 */
 	Object getUserBySlackId(String userid);
+
+	/**
+	 * 修改adminpassword
+	 *
+	 * @param user
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
+	void updateAdminPassword(User user);
 }

@@ -103,7 +103,22 @@ public class UserDaoImpl implements UserDao {
 	 */
 	@Override
 	public Object getUserBySlackId(String userid) {
-		UserSlackRelation userSlackRelation = this.server.createQuery(UserSlackRelation.class).where().eq("slack_user_id",userid).findOne();
+		UserSlackRelation userSlackRelation = this.server.createQuery(UserSlackRelation.class).where().eq(
+				"slack_user_id", userid).findOne();
 		return this.server.createQuery(User.class).where().idEq(userSlackRelation.getUserId()).findOne();
+	}
+
+	/**
+	 * 修改adminpassword
+	 *
+	 * @param user
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
+	@Override
+	public void updateAdminPassword(User user) {
+		this.server.update(User.class).set("password",user.getPassword()).set("salt",user.getSalt()).where().idEq(user.getId()).update();
 	}
 }
