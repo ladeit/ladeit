@@ -150,6 +150,6 @@ public class EnvDaoImpl implements EnvDao {
 	 */
 	@Override
 	public void updateEnvQuota(Env env) {
-		this.server.update(Env.class).set("cpu_limit",env.getCpuLimit()).set("cpu_limit_unit",env.getCpuLimitUnit()).set("mem_limit",env.getMemLimit()).set("mem_limit_unit",env.getMemLimitUnit()).set("cpu_request",env.getCpuRequest()).set("cpu_request_unit",env.getCpuRequestUnit()).set("mem_request",env.getMemRequest()).set("mem_request_unit",env.getMemRequestUnit()).set("resource_quota",env.getResourceQuota()).where().idEq(env.getId());
+		this.server.update(Env.class).set("cpu_limit",env.getCpuLimit()).set("cpu_limit_unit",env.getCpuLimitUnit()).set("mem_limit",env.getMemLimit()).set("mem_limit_unit",env.getMemLimitUnit()).set("cpu_request",env.getCpuRequest()).set("cpu_request_unit",env.getCpuRequestUnit()).set("mem_request",env.getMemRequest()).set("mem_request_unit",env.getMemRequestUnit()).set("resource_quota",env.getResourceQuota()).where().idEq(env.getId()).update();
 	}
 }
