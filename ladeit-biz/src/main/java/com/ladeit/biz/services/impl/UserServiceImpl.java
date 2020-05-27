@@ -320,7 +320,7 @@ public class UserServiceImpl implements UserService {
 		String[] password = PasswordUtil.encode(newPassword);
 		userInDatabase.setSalt(password[0]);
 		userInDatabase.setPassword(password[1]);
-		this.userDao.updateAdminPassword(user);
+		this.userDao.updateAdminPassword(userInDatabase);
 		return result;
 	}
 }
