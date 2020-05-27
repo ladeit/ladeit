@@ -286,6 +286,6 @@ public interface K8sClusterManager {
 	 * @date 20-5-25
 	 * @version 1.0.0
 	 */
-	void createNamespace(V1Namespace namespace, String config) throws ApiException;
+	V1Namespace createNamespace(V1Namespace namespace, String config) throws ApiException;
 }
 

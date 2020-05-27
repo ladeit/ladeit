@@ -175,7 +175,7 @@ public class ClusterServiceImpl implements ClusterService {
 					env.setMemLimitUnit(memlimit[1]);
 					env.setResourceQuota(true);
 				}
-				this.envService.createEnv(env);
+				this.envService.createEnvWithoutK8s(env);
 			}
 		}
 		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);

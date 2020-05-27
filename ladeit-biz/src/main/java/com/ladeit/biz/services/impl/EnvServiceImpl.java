@@ -86,13 +86,14 @@ public class EnvServiceImpl implements EnvService {
 	@Override
 	@Transactional
 	public ExecuteResult<String> createEnv(Env env) throws IOException, ApiException {
-		ExecuteResult<String> result = this.createEnvWithoutK8s(env);
 		V1Namespace namespace = new V1Namespace();
 		V1ObjectMeta meta = new V1ObjectMeta();
 		meta.setName(env.getNamespace());
 		namespace.setMetadata(meta);
 		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
-		this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
+		V1Namespace v1Namespace = this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
+		env.setId(v1Namespace.getMetadata().getUid());
+		ExecuteResult<String> result = this.createEnvWithoutK8s(env);
 		this.eventHandler.put(env.getId(), null);
 		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);

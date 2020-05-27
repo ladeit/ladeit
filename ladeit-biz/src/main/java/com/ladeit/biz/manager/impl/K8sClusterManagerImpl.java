@@ -625,8 +625,8 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 * @version 1.0.0
 	 */
 	@Override
-	public void createNamespace(V1Namespace namespace, String config) throws ApiException {
+	public V1Namespace createNamespace(V1Namespace namespace, String config) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
-		coreApi.createNamespace(namespace,null,null,null);
+		return coreApi.createNamespace(namespace,null,null,null);
 	}
 }

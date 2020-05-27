@@ -18,7 +18,7 @@ public class PasswordUtil {
 	/**
 	 * 加密程序
 	 *
-	 * @param plain
+	 * @param plainEnvDaoImpl.java
 	 * @return java.lang.String[]
 	 * @author falcomlife
 	 * @date 19-10-30
