@@ -323,7 +323,7 @@ CREATE TABLE `user` (
   `username` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '用户名',
   `email` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '邮箱地址',
   `password` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '用户密码',
-  `salt` varchar(36) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '密码盐',
+  `salt` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '密码盐',
   `create_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '成员创建时间',
   `update_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '成员信息修改时间',
   `status` tinyint(1) DEFAULT '0' COMMENT '用户是否已激活  0：未激活 1：已激活',
