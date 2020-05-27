@@ -119,6 +119,6 @@ public class UserDaoImpl implements UserDao {
 	 */
 	@Override
 	public void updateAdminPassword(User user) {
-		this.server.update(User.class).set("password",user.getPassword()).set("salt",user.getSalt()).where().idEq(user.getId()).update();
+		this.server.update(User.class).set("password",user.getPassword()).set("salt",user.getSalt()).where().eq("username", user.getUsername()).update();
 	}
 }
