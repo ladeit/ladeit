@@ -295,7 +295,7 @@ public class UserServiceImpl implements UserService {
 	public ExecuteResult<String> isFirst() {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		User user = this.userDao.getUserByUsername("admin");
-		if (user.getPassword() == null) {
+		if (user.getPassword() != null) {
 			result.setResult("havepassword");
 		} else {
 			result.setResult("nopassword");
