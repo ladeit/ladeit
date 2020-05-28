@@ -282,4 +282,15 @@ public interface ClusterService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<String> refreshNamespace(String clusterId) throws IOException, ApiException;
+
+	/**
+	 * webkubectl
+	 *
+	 * @param clusterId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-27
+	 * @version 1.0.0
+	 */
+	ExecuteResult<String> webkubectl(String clusterId) throws IOException;
 }

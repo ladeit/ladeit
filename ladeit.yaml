@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: ladeit
+    name: ladeit
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: ladeit
+    template:
+      metadata:
+        labels:
+          app: ladeit
+      spec:
+        containers:
+        - image: ladeit/ladeit:latest
+          imagePullPolicy: Always
+          name: ladeit
+          env:
+          - name: LADEIT_WEBKUBECTL_HOST
+            value: "com.ladeit.example"
+          ports:
+          - containerPort: 8000
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health
+              port: 8000
+              scheme: HTTP
+            periodSeconds: 60
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health
+              port: 8000
+              scheme: HTTP
+            periodSeconds: 60
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 1500m
+              memory: 3Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+        - image: kubeoperator/webkubectl:v2.4.0
+            imagePullPolicy: Always
+            name: webkubectl
+            ports:
+            - containerPort: 8080
+              protocol: TCP
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+              requests:
+                cpu: 500m
+                memory: 500m
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ladeit
+    name: ladeit
+  spec:
+    ports:
+    - name: ladeit
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    - name: webkubectl
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: ladeit
+    type: ClusterIP

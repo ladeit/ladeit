@@ -1,5 +1,6 @@
 package com.ladeit.biz.services.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ladeit.biz.annotation.Authority;
 import com.ladeit.biz.dao.*;
 import com.ladeit.biz.manager.K8sClusterManager;
@@ -18,6 +19,7 @@ import io.ebean.SqlRow;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.models.*;
+import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -64,6 +67,8 @@ public class ClusterServiceImpl implements ClusterService {
 	private MessageUtils messageUtils;
 	@Autowired
 	private EnvService envService;
+	@Resource(name = "globalOkHttpClient")
+	private OkHttpClient okHttpClient;
 
 	/**
 	 * 通过id查询
@@ -470,7 +475,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群下人员信息(不分页)
 	 *
 	 * @param clusterId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.UserClusterRelationAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.UserClusterRelationAO>>
 	 * @date 2020/2/2
 	 * @ahthor MddandPyy
 	 */
@@ -510,7 +515,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询要加入的人员信息
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.SeriveGroupUserAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.SeriveGroupUserAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -741,7 +746,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)根据当前登录人
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -766,7 +771,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
@@ -798,7 +803,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                                                                                                                                                                                                                               <                                                                                                                                                                                                                                                               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
@@ -1039,8 +1044,8 @@ public class ClusterServiceImpl implements ClusterService {
 
 			Map<String, Env> envMaps = envs.stream().collect(Collectors.toMap(Env::getNamespace, Function.identity()));
 			Map<String, V1Namespace> namespaceMap = new HashMap<>();
-			for(V1Namespace namespace:namespaces.getResult()){
-				namespaceMap.put(namespace.getMetadata().getName(),namespace);
+			for (V1Namespace namespace : namespaces.getResult()) {
+				namespaceMap.put(namespace.getMetadata().getName(), namespace);
 			}
 			// 取envs有namespaces没有的差集
 			envsOld.removeAll(namespacesNew);
@@ -1115,6 +1120,31 @@ public class ClusterServiceImpl implements ClusterService {
 				this.envService.updateEnvQuota(env);
 			}
 		}
+		return result;
+	}
+
+	/**
+	 * webkubectl
+	 *
+	 * @param clusterId
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-27
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> webkubectl(String clusterId) throws IOException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		Cluster cluster = this.clusterDao.getClusterById(clusterId);
+		String configBase64 = Base64.getEncoder().encodeToString(cluster.getK8sKubeconfig().getBytes());
+		String json = "{\"name\":\"" + cluster.getK8sName() + "\",\"kubeConfig\":\"" + configBase64 + "\"}";
+		RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+		Request request =
+				new Request.Builder().url("http://172.16.77.85:8080/api/kube-config").post(requestBody).build();
+		Response response = this.okHttpClient.newCall(request).execute();
+		String webKubectlHost = System.getenv().get("LADEIT_WEBKUBECTL_HOST");
+		String token = JSONObject.parseObject(new String(response.body().bytes())).getString("token");
+		result.setResult(webKubectlHost + "/terminal/?token=" + token);
 		return result;
 	}
 

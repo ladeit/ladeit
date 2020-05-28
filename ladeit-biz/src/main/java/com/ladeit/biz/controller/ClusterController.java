@@ -408,4 +408,9 @@ public class ClusterController {
 		return this.k8sClusterService.refreshNamespace(clusterId);
 	}
 
+	@GetMapping("/webkubectl/{clusterId}")
+	public ExecuteResult<String> webkubectl(@PathVariable("clusterId") String clusterId) throws IOException {
+		return this.k8sClusterService.webkubectl(clusterId);
+	}
+
 }
