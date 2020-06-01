@@ -378,7 +378,7 @@ public class EnvServiceImpl implements EnvService {
 						BigDecimal cpur = UnitUtil.quantityToNum(reqMap.get("cpu"), "cpu");
 						BigDecimal memr = UnitUtil.quantityToNum(reqMap.get("memory"), "mem");
 						BigDecimal cpul = UnitUtil.quantityToNum(limitMap.get("cpu"), "cpu");
-						BigDecimal meml = UnitUtil.quantityToNum(limitMap.get("memory"), "cpu");
+						BigDecimal meml = UnitUtil.quantityToNum(limitMap.get("memory"), "mem");
 						cpuRequest = cpuRequest.add(cpur == null ? bigZero : cpur);
 						memRequest = memRequest.add(memr == null ? bigZero : memr);
 						cpuLimit = cpuLimit.add(cpul == null ? bigZero : cpul);
