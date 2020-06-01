@@ -1135,13 +1135,13 @@ public class ClusterServiceImpl implements ClusterService {
 	public ExecuteResult<String> webkubectl(String clusterId) throws IOException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster cluster = this.clusterDao.getClusterById(clusterId);
+		String webKubectlHost = System.getenv().get("LADEIT_WEBKUBECTL_HOST");
 		String configBase64 = Base64.getEncoder().encodeToString(cluster.getK8sKubeconfig().getBytes());
 		String json = "{\"name\":\"" + cluster.getK8sName() + "\",\"kubeConfig\":\"" + configBase64 + "\"}";
 		RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
 		Request request =
-				new Request.Builder().url("http://172.16.77.85:8080/api/kube-config").post(requestBody).build();
+				new Request.Builder().url(webKubectlHost+"/api/kube-config").post(requestBody).build();
 		Response response = this.okHttpClient.newCall(request).execute();
-		String webKubectlHost = System.getenv().get("LADEIT_WEBKUBECTL_HOST");
 		String token = JSONObject.parseObject(new String(response.body().bytes())).getString("token");
 		result.setResult(webKubectlHost + "/terminal/?token=" + token);
 		return result;
