@@ -31,7 +31,7 @@ public interface ClusterService {
 	 * @date 19-9-19
 	 * @version 1.0.0
 	 */
-	ExecuteResult<String> createCluster(Cluster bzK8sClusterBO) throws IOException, ApiException, InterruptedException;
+	ExecuteResult<String> createCluster(Cluster bzK8sClusterBO) throws IOException, ApiException;
 
 	/**
 	 * 更新cluster

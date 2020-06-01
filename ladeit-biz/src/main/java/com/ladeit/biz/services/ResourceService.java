@@ -3,6 +3,7 @@ package com.ladeit.biz.services;
 import com.alibaba.fastjson.JSONObject;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.pojo.ao.*;
+import com.ladeit.pojo.dto.metric.pod.PodMetric;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 
@@ -262,4 +263,14 @@ public interface ResourceService {
 	* @param serviceId
 	*/
 	ExecuteResult<String> getAllYamlInService(String serviceId) throws IOException;
+
+	/**
+	* 查询service占用的资源
+	* @author falcomlife
+	* @date 20-6-1
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.util.Map<java.lang.String,java.lang.String>>
+	* @param envId
+	*/
+	ExecuteResult<Map<String,String>> getUsedResource(String envId, String podName) throws IOException, ApiException;
 }

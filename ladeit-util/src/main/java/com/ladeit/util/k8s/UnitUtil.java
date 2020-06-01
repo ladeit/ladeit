@@ -58,33 +58,43 @@ public class UnitUtil {
 
 	public static String[] unitConverter(Quantity quantity, String type) {
 		String[] result = new String[2];
-		String regEx="[^0-9]";
+		String regEx = "[^0-9]";
 		Pattern p = Pattern.compile(regEx);
 		Matcher m = p.matcher(quantity.toSuffixedString());
 		result[0] = m.replaceAll("").trim();
-		result[1] = quantity.toSuffixedString().replace(result[0],"");
+		result[1] = quantity.toSuffixedString().replace(result[0], "");
+		return result;
+	}
 
-//
-//		if ("cpu".equals(type)) {
-//			System.out.println(quantity.toSuffixedString());
-//			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
-////				result[0] = Integer.toString(quantity.getNumber().multiply(new BigDecimal(1000)).intValue());
-////				result[1] = "m";
-//			}else if(quantity.getFormat() == Quantity.Format.BINARY_SI){
-////				result[0] = Integer.toString(quantity.getNumber().intValue());
-////				result[1] = "m";
-//			}
-//		}
-//		if ("mem".equals(type)) {
-//			System.out.println(quantity.toSuffixedString());
-//			if(quantity.getFormat() == Quantity.Format.DECIMAL_SI){
-////				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1000)).intValue());
-////				result[1] = "m";
-//			}else if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
-////				result[0] = Integer.toString(quantity.getNumber().divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).intValue());
-////				result[1] = "Mi";
-//			}
-//		}
+	/**
+	 * quantity转化，cpu统一成mcore，memory统一成m
+	 *
+	 * @param quantity
+	 * @param type
+	 * @return
+	 * @author falcomlife
+	 * @date 20-5-30
+	 * @version 1.0.0
+	 */
+	public static BigDecimal quantityToNum(Quantity quantity, String type) {
+		BigDecimal result = null;
+		if (quantity == null) {
+			return null;
+		}
+		if ("cpu".equals(type)) {
+			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
+				result = quantity.getNumber().multiply(new BigDecimal(1000));
+			} else if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
+				result = quantity.getNumber();
+			}
+		}
+		if ("mem".equals(type)) {
+			if (quantity.getFormat() == Quantity.Format.DECIMAL_SI) {
+				result = quantity.getNumber().multiply(new BigDecimal(1000));
+			} else if (quantity.getFormat() == Quantity.Format.BINARY_SI) {
+				result = quantity.getNumber().divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).divide(new BigDecimal(1024)).multiply(new BigDecimal(1000));
+			}
+		}
 		return result;
 	}
 

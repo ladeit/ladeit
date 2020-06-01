@@ -591,6 +591,24 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 		return v1ResourceQuotaList.getItems();
 	}
 
+
+	/**
+	 * 查询所有resourcequota
+	 *
+	 * @param config
+	 * @return java.util.List<io.kubernetes.client.models.V1ResourceQuota>
+	 * @author falcomlife
+	 * @date 20-3-25
+	 * @version 1.0.0
+	 */
+	@Override
+	public List<V1ResourceQuota> getAllResourceQuota(String config) throws ApiException {
+		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		V1ResourceQuotaList v1ResourceQuotaList = coreApi.listResourceQuotaForAllNamespaces(null, null, null, null,
+				null, null, null, null, null);
+		return v1ResourceQuotaList.getItems();
+	}
+
 	/**
 	 * 删除resourcequota
 	 *

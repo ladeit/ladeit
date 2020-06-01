@@ -84,7 +84,7 @@ public interface EnvService {
 	 * @date 19-9-27
 	 * @version 1.0.0
 	 */
-	ExecuteResult<List<Env>> getEnvList(Env bzK8sEnvBO);
+	ExecuteResult<List<Env>> getEnvList(Env bzK8sEnvBO, String config) throws IOException, ApiException;
 
 	/**
 	 * 获取所有的env
@@ -117,7 +117,7 @@ public interface EnvService {
 	 * @date 2020/3/16
 	 * @ahthor MddandPyy
 	 */
-	ExecuteResult<EnvAO> getEnvByEnvAndClusterId(String envId, String clusterId);
+	ExecuteResult<EnvAO> getEnvByEnvAndClusterId(String envId, String clusterId) throws ApiException;
 
 	/**
 	 * 查询env上挂的service，用于删除集群前的校验

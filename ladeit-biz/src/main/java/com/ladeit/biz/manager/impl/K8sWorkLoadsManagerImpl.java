@@ -81,6 +81,37 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 	}
 
 	/**
+	 * 查询pod
+	 *
+	 * @param namespace
+	 * @param config
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Pod>>
+	 * @author falcomlife
+	 * @date 19-12-1
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<List<V1Pod>> getPodsInNamespace(String namespace, String config) {
+		ExecuteResult<List<V1Pod>> executeResult = new ExecuteResult<>();
+		CoreV1Api v1Api = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		try {
+			V1PodList listPods =
+					v1Api.listNamespacedPod(namespace, null, null, null, null, null, null, null, null, null);
+			//log.info("获取CronJob：{}", items);
+			executeResult.setResult(listPods.getItems());
+			executeResult.setCode(Code.SUCCESS);
+			return executeResult;
+		} catch (ApiException e) {
+			e.printStackTrace();
+			log.error(e.getMessage(), e);
+			executeResult.setCode(Code.FAILED);
+			// Error getting Pod.
+			executeResult.addErrorMessage("错误信息：获取Pod失败");
+		}
+		return executeResult;
+	}
+
+	/**
 	 * 通过releaseid查询pod
 	 *
 	 * @param releaseid

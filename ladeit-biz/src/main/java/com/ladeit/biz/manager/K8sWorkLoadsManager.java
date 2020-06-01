@@ -23,6 +23,18 @@ public interface K8sWorkLoadsManager {
 	ExecuteResult<List<V1Pod>> getPods(String labelSelector, String config);
 
 	/**
+	 * 查询pod
+	 *
+	 * @param namespace
+	 * @param config
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<io.kubernetes.client.models.V1Pod>>
+	 * @author falcomlife
+	 * @date 19-12-1
+	 * @version 1.0.0
+	 */
+	ExecuteResult<List<V1Pod>> getPodsInNamespace(String namespace, String config);
+
+	/**
 	 * 通过releaseid查询pod
 	 *
 	 * @param releaseid

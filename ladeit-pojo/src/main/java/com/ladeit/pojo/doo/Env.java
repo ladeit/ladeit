@@ -1,12 +1,11 @@
 package com.ladeit.pojo.doo;
 
+import com.ladeit.pojo.dto.metric.pod.Occupy;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @program: ladeit
@@ -155,4 +154,15 @@ public class Env {
 	@Column(name = "disable")
 	private String disable;
 
+	@Transient
+	private List<Occupy> occupyCpuReq;
+
+	@Transient
+	private List<Occupy> occupyMemReq;
+
+	@Transient
+	private List<Occupy> occupyCpuLimit;
+
+	@Transient
+	private List<Occupy> occupyMemLimit;
 }

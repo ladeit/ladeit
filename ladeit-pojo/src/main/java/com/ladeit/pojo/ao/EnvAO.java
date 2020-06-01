@@ -1,9 +1,12 @@
 package com.ladeit.pojo.ao;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ladeit.pojo.dto.metric.pod.Occupy;
 import lombok.Data;
 
+import javax.persistence.Transient;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @program: ladeit
@@ -149,5 +152,13 @@ public class EnvAO {
 	private String accessLevel;
 
 	private String disable;
+
+	private List<Occupy> occupyCpuReq;
+
+	private List<Occupy> occupyMemReq;
+
+	private List<Occupy> occupyCpuLimit;
+
+	private List<Occupy> occupyMemLimit;
 
 }

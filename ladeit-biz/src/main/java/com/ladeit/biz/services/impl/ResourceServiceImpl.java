@@ -23,7 +23,10 @@ import com.ladeit.pojo.ao.topology.*;
 import com.ladeit.pojo.ao.topology.StringMatch;
 import com.ladeit.pojo.ao.typesResource.*;
 import com.ladeit.pojo.doo.*;
+import com.ladeit.pojo.dto.metric.pod.Container;
+import com.ladeit.pojo.dto.metric.pod.PodMetric;
 import com.ladeit.util.k8s.K8sClientUtil;
+import com.ladeit.util.k8s.MetricApi;
 import com.ladeit.util.k8s.UnitUtil;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ResourceQuota;
@@ -49,6 +52,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,6 +95,8 @@ public class ResourceServiceImpl implements ResourceService {
 	private ServiceGroupService serviceGroupService;
 	@Autowired
 	private MessageUtils messageUtils;
+	@Autowired
+	private MetricApi metricApi;
 
 	/**
 	 * 查询yaml
@@ -1066,7 +1073,7 @@ public class ResourceServiceImpl implements ResourceService {
 				configuration.setMemRequest(Integer.parseInt(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[0]));
 				configuration.setMemRequestUnit(UnitUtil.stripNumberUnit(requestsmemory.toSuffixedString())[1]);
 			}
-			if(container.getEnv() != null){
+			if (container.getEnv() != null) {
 				List<com.ladeit.pojo.ao.configuration.Env> envs = container.getEnv().stream().map(e -> {
 					com.ladeit.pojo.ao.configuration.Env envInner = new com.ladeit.pojo.ao.configuration.Env();
 					envInner.setKey(e.getName());
@@ -1076,16 +1083,17 @@ public class ResourceServiceImpl implements ResourceService {
 				configuration.setEnvs(envs);
 			}
 			LivenessProbe l = new LivenessProbe();
-			if(container.getLivenessProbe() != null){
-				if(container.getLivenessProbe().getExec()!=null && container.getLivenessProbe().getExec().getCommand()!=null && !container.getLivenessProbe().getExec().getCommand().isEmpty()){
+			if (container.getLivenessProbe() != null) {
+				if (container.getLivenessProbe().getExec() != null && container.getLivenessProbe().getExec().getCommand() != null && !container.getLivenessProbe().getExec().getCommand().isEmpty()) {
 					l.setCommand(container.getLivenessProbe().getExec().getCommand().get(0));
 				}
-				l.setFailureThreshold(container.getLivenessProbe().getFailureThreshold());l.setHeads(container.getLivenessProbe().getHttpGet().getHttpHeaders().stream().map(header -> {
+				l.setFailureThreshold(container.getLivenessProbe().getFailureThreshold());
+				l.setHeads(container.getLivenessProbe().getHttpGet().getHttpHeaders().stream().map(header -> {
 					Map<String, String> map = new HashMap<>();
 					map.put(header.getName(), header.getValue());
 					return map;
 				}).collect(Collectors.toList()));
-				if(container.getLivenessProbe().getHttpGet() != null){
+				if (container.getLivenessProbe().getHttpGet() != null) {
 					l.setPath(container.getLivenessProbe().getHttpGet().getPath());
 					l.setPort(container.getLivenessProbe().getHttpGet().getPort().getIntValue());
 					l.setProtocol(container.getLivenessProbe().getHttpGet().getScheme());
@@ -1099,7 +1107,7 @@ public class ResourceServiceImpl implements ResourceService {
 			configuration.setReplicas(dep.getSpec().getReplicas());
 			configuration.setResourceQuota(rqs.isEmpty() ? false : true);
 			configuration.setType("Statefulset");
-			if(dep.getSpec().getTemplate().getSpec().getVolumes() != null) {
+			if (dep.getSpec().getTemplate().getSpec().getVolumes() != null) {
 				List<Volume> volumes = dep.getSpec().getTemplate().getSpec().getVolumes().stream().map(v1Volume -> {
 					Volume v = new Volume();
 					v.setName(v1Volume.getName());
@@ -1987,7 +1995,7 @@ public class ResourceServiceImpl implements ResourceService {
 			if (!jo.getJSONArray("items").isEmpty()) {
 				jo.getJSONArray("items").stream().forEach(i -> {
 					JSONObject joo = JSON.parseObject(JSON.toJSONString(i));
-					if(joo.getJSONObject("metadata").getJSONObject("labels")!=null){
+					if (joo.getJSONObject("metadata").getJSONObject("labels") != null) {
 						String id = joo.getJSONObject("metadata").getJSONObject("labels").getString("releaseId");
 						if (release.getId().equals(id)) {
 							yaml.append("---\n").append(Yaml.dump(i));
@@ -1999,6 +2007,43 @@ public class ResourceServiceImpl implements ResourceService {
 		if (yaml.length() != 0) {
 			result.setResult(yaml.substring(4, yaml.length()));
 		}
+		return result;
+	}
+
+	/**
+	 * 查询service占用的资源
+	 *
+	 * @param envId
+	 * @return com.ladeit.common.ExecuteResult<java.util.Map<java.lang.String,java.lang.String>>
+	 * @author falcomlife
+	 * @date 20-6-1
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<Map<String,String>> getUsedResource(String envId, String podName) throws IOException,
+			ApiException {
+		ExecuteResult<Map<String,String>> result = new ExecuteResult<>();
+		Map<String,String> map = new HashMap<>();
+		Env env = this.envService.getEnvById(envId);
+		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
+		List<PodMetric> podMetrics = this.metricApi.listPodMetric(cluster.getK8sKubeconfig());
+		List<PodMetric> podMetricList =
+				podMetrics.stream().filter(podMetric -> podMetric.getMetadata().getName().equals(podName)).filter(podMetric -> podMetric.getMetadata().getNamespace().equals(env.getNamespace())).collect(Collectors.toList());
+		BigDecimal big1000 = new BigDecimal(1000);
+		BigDecimal big1024 = new BigDecimal(1024);
+		for (PodMetric podMetric:podMetricList) {
+			BigDecimal cpusum = new BigDecimal(0);
+			BigDecimal memsum = new BigDecimal(0);
+			for (Container container:podMetric.getContainers()) {
+				cpusum = cpusum.add(new BigDecimal(container.getUsage().getCpu().replace("n", "")));
+				memsum = memsum.add(new BigDecimal(container.getUsage().getMemory().replace("Ki", "")));
+			}
+			cpusum = cpusum.divide(big1000).divide(big1000,1, RoundingMode.HALF_UP);
+			memsum = memsum.divide(big1024,1, RoundingMode.HALF_UP);
+			map.put("cpu",cpusum+"m");
+			map.put("mem",memsum+"Mi");
+		}
+		result.setResult(map);
 		return result;
 	}
 }

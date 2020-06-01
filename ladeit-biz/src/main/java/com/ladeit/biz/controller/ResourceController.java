@@ -3,6 +3,7 @@ package com.ladeit.biz.controller;
 import com.ladeit.biz.services.ResourceService;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.pojo.ao.*;
+import com.ladeit.pojo.dto.metric.pod.PodMetric;
 import freemarker.template.utility.Execute;
 import io.kubernetes.client.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -252,5 +253,20 @@ public class ResourceController {
 	@GetMapping("/{serviceId}/yaml")
 	public ExecuteResult<String> getAllYamlInService(@PathVariable String serviceId) throws IOException {
 		return this.resourceService.getAllYamlInService(serviceId);
+	}
+
+	/**
+	* 获取service已经使用的资源
+	* @author falcomlife
+	* @date 20-6-1
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.util.Map<java.lang.String,java.lang.String>>
+	* @param envId
+	* @param podName
+	*/
+	@GetMapping("/occupy/{envId}/{podName}")
+	public ExecuteResult<Map<String,String>> getUsedResource(@PathVariable String envId, @PathVariable String podName) throws IOException,
+			ApiException {
+		return this.resourceService.getUsedResource(envId, podName);
 	}
 }

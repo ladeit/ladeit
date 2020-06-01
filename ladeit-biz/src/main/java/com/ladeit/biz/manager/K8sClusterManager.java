@@ -266,6 +266,17 @@ public interface K8sClusterManager {
 	List<V1ResourceQuota> getResourceQuota(String namespace, String config) throws ApiException;
 
 	/**
+	 * 查询所有resourcequota
+	 *
+	 * @param config
+	 * @return java.util.List<io.kubernetes.client.models.V1ResourceQuota>
+	 * @author falcomlife
+	 * @date 20-3-25
+	 * @version 1.0.0
+	 */
+	List<V1ResourceQuota> getAllResourceQuota(String config) throws ApiException;
+
+	/**
 	 * 删除resourcequota
 	 *
 	 * @param namespace

@@ -114,7 +114,7 @@ public class ClusterController {
 	 */
 	@ApiOperation(value = "查询集群和服务")
 	@GetMapping("/getClusterAndEnv")
-	public ExecuteResult<List<ClusterAO>> getClusterAndEnv() {
+	public ExecuteResult<List<ClusterAO>> getClusterAndEnv() throws IOException, ApiException {
 		ExecuteResult<List<ClusterAO>> result = new ExecuteResult<>();
 		ExecuteResult<List<Cluster>> resultbo = this.k8sClusterService.queryClusterByUser();
 		List<ClusterAO> list = new ArrayList<>();
@@ -128,7 +128,7 @@ public class ClusterController {
 			//添加环境信息
 			Env bzK8sEnvBO = new Env();
 			bzK8sEnvBO.setClusterId(cluster.getId());
-			ExecuteResult<List<Env>> envListResult = k8sEnvService.getEnvList(bzK8sEnvBO);
+			ExecuteResult<List<Env>> envListResult = k8sEnvService.getEnvList(bzK8sEnvBO, cluster.getK8sKubeconfig());
 			List<EnvAO> envAOS = new ArrayList<>();
 			for (Env env : envListResult.getResult()) {
 				String envLevel = k8sClusterService.getUserEnvLevel(user.getId(), env.getId());

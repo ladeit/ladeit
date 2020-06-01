@@ -6,6 +6,7 @@ import com.ladeit.biz.dao.ServiceDao;
 import com.ladeit.biz.dao.ServiceGroupDao;
 import com.ladeit.biz.dao.UserEnvRelationDao;
 import com.ladeit.biz.manager.K8sClusterManager;
+import com.ladeit.biz.manager.K8sWorkLoadsManager;
 import com.ladeit.biz.runner.events.EventHandler;
 import com.ladeit.biz.services.ClusterService;
 import com.ladeit.biz.services.EnvService;
@@ -16,13 +17,17 @@ import com.ladeit.common.system.Code;
 import com.ladeit.pojo.ao.EnvAO;
 import com.ladeit.pojo.ao.ServiceAO;
 import com.ladeit.pojo.doo.*;
+import com.ladeit.pojo.dto.metric.pod.Occupy;
+import com.ladeit.pojo.dto.metric.pod.PodMetric;
 import com.ladeit.util.ListUtil;
+import com.ladeit.util.k8s.MetricApi;
 import com.ladeit.util.k8s.UnitUtil;
+import io.fabric8.kubernetes.api.model.Container;
 import io.kubernetes.client.ApiException;
-import io.kubernetes.client.models.V1Namespace;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1ResourceQuota;
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.models.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,6 +67,12 @@ public class EnvServiceImpl implements EnvService {
 	private EventHandler eventHandler;
 	@Autowired
 	private MessageUtils messageUtils;
+	@Autowired
+	private MetricApi metricApi;
+	@Autowired
+	private K8sWorkLoadsManager k8sWorkLoadsManager;
+	@Autowired
+	private K8sClusterManager k8sClusterManager;
 
 	/**
 	 * 根据id得到env
@@ -101,13 +114,14 @@ public class EnvServiceImpl implements EnvService {
 	}
 
 	/**
-	* 创建一个env不创建k8s资源
-	* @author falcomlife
-	* @date 20-5-26
-	* @version 1.0.0
-	* @return com.ladeit.common.ExecuteResult<java.lang.String>
-	* @param env
-	*/
+	 * 创建一个env不创建k8s资源
+	 *
+	 * @param env
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-5-26
+	 * @version 1.0.0
+	 */
 	@Override
 	@Transactional
 	public ExecuteResult<String> createEnvWithoutK8s(Env env) throws ApiException, IOException {
@@ -258,7 +272,7 @@ public class EnvServiceImpl implements EnvService {
 	 * 查询env
 	 *
 	 * @param pager
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.doo.Env>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager   <   com.ladeit.pojo.doo.Env>>
 	 * @author falcomlife
 	 * @date 20-4-10
 	 * @version 1.0.0
@@ -293,8 +307,9 @@ public class EnvServiceImpl implements EnvService {
 	 * @version 1.0.0
 	 */
 	@Override
-	public ExecuteResult<List<Env>> getEnvList(Env env) {
+	public ExecuteResult<List<Env>> getEnvList(Env env, String config) throws IOException, ApiException {
 		ExecuteResult<List<Env>> result = new ExecuteResult<>();
+		BigDecimal bigZero = new BigDecimal(0);
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		// 先查询所有的公共env
 		List<Env> envlist = this.envDao.getEnvList(env);
@@ -315,15 +330,176 @@ public class EnvServiceImpl implements EnvService {
 				Env.class);
 		List<Env> listcombine =
 				listCombineBo.stream().distinct().sorted(Comparator.comparing(Env::getCreateAt)).collect(Collectors.toList());
+//		if (StringUtils.isNotBlank(config)) {
+//			listcombine = this.getResourceQuotaInNamespace(listCombine, config);
+//		}
+		List<V1ResourceQuota> resourceQuotas = this.k8sClusterManager.getAllResourceQuota(config);
+		for (Env envRes : listcombine) {
+			ExecuteResult<List<V1Pod>> podRes = this.k8sWorkLoadsManager.getPodsInNamespace(envRes.getNamespace(),
+					config);
+			List<Occupy> occupiesCpuReq = new ArrayList<>();
+			List<Occupy> occupiesMemReq = new ArrayList<>();
+			List<Occupy> occupiesCpuLimit = new ArrayList<>();
+			List<Occupy> occupiesMemLimit = new ArrayList<>();
+
+			envRes.setOccupyCpuReq(occupiesCpuReq);
+			envRes.setOccupyMemReq(occupiesMemReq);
+			envRes.setOccupyCpuLimit(occupiesCpuLimit);
+			envRes.setOccupyMemLimit(occupiesMemLimit);
+
+			BigDecimal cpuReqSum = new BigDecimal(0);
+			BigDecimal memReqSum = new BigDecimal(0);
+			BigDecimal cpuLimitSum = new BigDecimal(0);
+			BigDecimal memLimitSum = new BigDecimal(0);
+
+			BigDecimal namespaceCpuRequest = new BigDecimal(0);
+			BigDecimal namespaceMemRequest = new BigDecimal(0);
+			BigDecimal namespaceCpuLimit = new BigDecimal(0);
+			BigDecimal namespaceMemLimit = new BigDecimal(0);
+
+			if (podRes.getResult() != null && !podRes.getResult().isEmpty()) {
+				for (V1Pod pod : podRes.getResult()) {
+					Occupy occupyCpuReq = new Occupy();
+					Occupy occupyMemReq = new Occupy();
+					Occupy occupyCpuLimit = new Occupy();
+					Occupy occupyMemLimit = new Occupy();
+
+					BigDecimal cpuRequest = new BigDecimal(0);
+					BigDecimal memRequest = new BigDecimal(0);
+					BigDecimal cpuLimit = new BigDecimal(0);
+					BigDecimal memLimit = new BigDecimal(0);
+
+					for (V1Container v1Container : pod.getSpec().getContainers()) {
+						Map<String, Quantity> reqMap = v1Container.getResources().getRequests();
+						Map<String, Quantity> limitMap = v1Container.getResources().getLimits();
+						if (((reqMap != null && (reqMap.get("cpu") == null && reqMap.get("memory") == null)) && (limitMap != null && (limitMap.get("cpu") == null && limitMap.get("memory") == null))) || (reqMap == null || limitMap == null)) {
+							continue;
+						}
+						BigDecimal cpur = UnitUtil.quantityToNum(reqMap.get("cpu"), "cpu");
+						BigDecimal memr = UnitUtil.quantityToNum(reqMap.get("memory"), "mem");
+						BigDecimal cpul = UnitUtil.quantityToNum(limitMap.get("cpu"), "cpu");
+						BigDecimal meml = UnitUtil.quantityToNum(limitMap.get("memory"), "cpu");
+						cpuRequest = cpuRequest.add(cpur == null ? bigZero : cpur);
+						memRequest = memRequest.add(memr == null ? bigZero : memr);
+						cpuLimit = cpuLimit.add(cpul == null ? bigZero : cpul);
+						memLimit = memLimit.add(meml == null ? bigZero : meml);
+					}
+
+					cpuReqSum = cpuReqSum.add(cpuRequest);
+					memReqSum = memReqSum.add(memRequest);
+					cpuLimitSum = cpuLimitSum.add(cpuLimit);
+					memLimitSum = memLimitSum.add(memLimit);
+
+					if (resourceQuotas != null && !resourceQuotas.isEmpty()) {
+						for (V1ResourceQuota v1ResourceQuota : resourceQuotas) {
+							if(v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())){
+								namespaceCpuRequest = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
+										"requests.cpu"), "cpu");
+								namespaceMemRequest = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
+										"requests.memory"), "mem");
+								namespaceCpuLimit = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
+										"limits.cpu"), "cpu");
+								namespaceMemLimit = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
+										"limits.memory"), "mem");
+
+								envRes.setCpuRequest(namespaceCpuRequest.intValue());
+								envRes.setCpuRequestUnit("m");
+								envRes.setMemRequest(namespaceMemRequest.intValue());
+								envRes.setMemRequestUnit("m");
+								envRes.setCpuLimit(namespaceCpuLimit.intValue());
+								envRes.setCpuLimitUnit("m");
+								envRes.setMemLimit(namespaceMemLimit.intValue());
+								envRes.setMemLimitUnit("m");
+
+							}
+						}
+					}
+					occupyCpuReq.setName(pod.getMetadata().getName());
+					occupyMemReq.setName(pod.getMetadata().getName());
+					occupyCpuLimit.setName(pod.getMetadata().getName());
+					occupyMemLimit.setName(pod.getMetadata().getName());
+
+					occupyCpuReq.setNum(cpuRequest.longValue());
+					occupyMemReq.setNum(memRequest.longValue());
+					occupyCpuLimit.setNum(cpuLimit.longValue());
+					occupyMemLimit.setNum(memLimit.longValue());
+
+					occupyCpuReq.setPercentage(namespaceCpuRequest.equals(bigZero) ? 0 :
+							cpuRequest.divide(namespaceCpuRequest, 3, RoundingMode.HALF_UP).doubleValue());
+					occupyMemReq.setPercentage(namespaceMemRequest.equals(bigZero) ? 0 :
+							memRequest.divide(namespaceMemRequest, 3, RoundingMode.HALF_UP).doubleValue());
+					occupyCpuLimit.setPercentage(namespaceCpuLimit.equals(bigZero) ? 0 :
+							cpuLimit.divide(namespaceCpuLimit, 3, RoundingMode.HALF_UP).doubleValue());
+					occupyMemLimit.setPercentage(namespaceMemLimit.equals(bigZero) ? 0 :
+							memLimit.divide(namespaceMemLimit, 3, RoundingMode.HALF_UP).doubleValue());
+
+					occupyCpuReq.setEnvId(envRes.getId());
+					occupyMemReq.setEnvId(envRes.getId());
+					occupyCpuLimit.setEnvId(envRes.getId());
+					occupyMemLimit.setEnvId(envRes.getId());
+
+					occupiesCpuReq.add(occupyCpuReq);
+					occupiesMemReq.add(occupyMemReq);
+					occupiesCpuLimit.add(occupyCpuLimit);
+					occupiesMemLimit.add(occupyMemLimit);
+				}
+			}
+		}
 		result.setResult(listcombine);
 		return result;
+	}
+
+	/**
+	 * 给env添加资源属性
+	 *
+	 * @param list
+	 * @param config
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-5-30
+	 * @version 1.0.0
+	 */
+	private List<Env> getResourceQuotaInNamespace(List<Env> list, String config) {
+		for (Env e : list) {
+			List<V1ResourceQuota> rqs = null;
+			try {
+				rqs = this.clusterManager.getResourceQuota(e.getNamespace(),
+						config);
+			} catch (ApiException ex) {
+				log.info(ex.getMessage(), ex);
+			}
+			if (rqs != null && !rqs.isEmpty()) {
+				for (V1ResourceQuota v1ResourceQuota : rqs) {
+					String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".cpu"), "cpu");
+					String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+							".memory"), "mem");
+					String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+							"cpu");
+					String[] memlimit =
+							UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+					e.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
+					e.setCpuRequestUnit(cpurequest[1]);
+					e.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
+					e.setMemRequestUnit(memrequest[1]);
+					e.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
+					e.setCpuLimitUnit(cpulimit[1]);
+					e.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
+					e.setMemLimitUnit(memlimit[1]);
+				}
+				e.setResourceQuota(true);
+			} else {
+				e.setResourceQuota(false);
+			}
+		}
+		return list;
 	}
 
 	/**
 	 * 获取所有的env
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Env>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.doo.Env>>
 	 * @author falcomlife
 	 * @date 20-4-10
 	 * @version 1.0.0
@@ -386,7 +562,39 @@ public class EnvServiceImpl implements EnvService {
 		ExecuteResult<EnvAO> result = new ExecuteResult<>();
 		Env env = envDao.getEnvByClusterAndEnvId(clusterId, envId);
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		Cluster cluster = this.k8sClusterService.getClusterById(clusterId);
 		UserEnvRelation userEnvRelation = userEnvRelationDao.queryByEnvIdAndUserId(env.getId(), user.getId());
+		ExecuteResult<List<V1Namespace>> namespaces = this.clusterManager.listNamespace(cluster.getK8sKubeconfig());
+		List<V1ResourceQuota> rqs = null;
+		try {
+			rqs = this.clusterManager.getResourceQuota(env.getNamespace(),
+					cluster.getK8sKubeconfig());
+		} catch (ApiException e) {
+			log.info(e.getMessage(), e);
+		}
+		if (rqs != null && !rqs.isEmpty()) {
+			for (V1ResourceQuota v1ResourceQuota : rqs) {
+				String[] cpurequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+						".cpu"), "cpu");
+				String[] memrequest = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("requests" +
+						".memory"), "mem");
+				String[] cpulimit = UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.cpu"),
+						"cpu");
+				String[] memlimit =
+						UnitUtil.unitConverter(v1ResourceQuota.getSpec().getHard().get("limits.memory"), "mem");
+				env.setCpuRequest(StringUtils.isNotBlank(cpurequest[0]) ? Integer.parseInt(cpurequest[0]) : null);
+				env.setCpuRequestUnit(cpurequest[1]);
+				env.setMemRequest(StringUtils.isNotBlank(memrequest[0]) ? Integer.parseInt(memrequest[0]) : null);
+				env.setMemRequestUnit(memrequest[1]);
+				env.setCpuLimit(StringUtils.isNotBlank(cpulimit[0]) ? Integer.parseInt(cpulimit[0]) : null);
+				env.setCpuLimitUnit(cpulimit[1]);
+				env.setMemLimit(StringUtils.isNotBlank(memlimit[0]) ? Integer.parseInt(memlimit[0]) : null);
+				env.setMemLimitUnit(memlimit[1]);
+				env.setResourceQuota(true);
+			}
+		} else {
+			env.setResourceQuota(false);
+		}
 		EnvAO envAO = new EnvAO();
 		BeanUtils.copyProperties(env, envAO);
 		if (userEnvRelation != null) {

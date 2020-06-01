@@ -66,6 +66,7 @@ public class EnvController {
 
 	/**
 	 * 更新env
+	 *
 	 * @param bzK8sEnvAO
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2019/12/4
@@ -76,11 +77,12 @@ public class EnvController {
 	public ExecuteResult<String> updateEnv(@RequestBody EnvAO bzK8sEnvAO) throws IOException, ApiException {
 		Env bzK8sEnvBO = new Env();
 		BeanUtils.copyProperties(bzK8sEnvAO, bzK8sEnvBO);
-		return this.k8sEnvService.updateEnv(bzK8sEnvBO.getId(),bzK8sEnvBO);
+		return this.k8sEnvService.updateEnv(bzK8sEnvBO.getId(), bzK8sEnvBO);
 	}
 
 	/**
 	 * 删除env
+	 *
 	 * @param bzK8sEnvAO
 	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
 	 * @date 2020/3/17
@@ -88,7 +90,7 @@ public class EnvController {
 	 */
 	@DeleteMapping("")
 	public ExecuteResult<String> deleteEnv(@RequestBody EnvAO bzK8sEnvAO) throws IOException {
-		return this.k8sEnvService.deleteEnv(bzK8sEnvAO.getId(),bzK8sEnvAO);
+		return this.k8sEnvService.deleteEnv(bzK8sEnvAO.getId(), bzK8sEnvAO);
 	}
 
 	/**
@@ -128,12 +130,13 @@ public class EnvController {
 	 */
 	@ApiOperation(value = "分页查询环境")
 	@GetMapping("/{clusterId}")
-	@Authority(type="cluster",level="R")
-	public ExecuteResult<List<EnvAO>> getEnvList(@PathVariable("clusterId") String clusterId) {
+	@Authority(type = "cluster", level = "R")
+	public ExecuteResult<List<EnvAO>> getEnvList(@PathVariable("clusterId") String clusterId) throws IOException,
+			ApiException {
 		ExecuteResult<List<EnvAO>> result = new ExecuteResult<>();
 		Env bzK8sEnvBO = new Env();
 		bzK8sEnvBO.setClusterId(clusterId);
-		ExecuteResult<List<Env>> list = this.k8sEnvService.getEnvList(bzK8sEnvBO);
+		ExecuteResult<List<Env>> list = this.k8sEnvService.getEnvList(bzK8sEnvBO, null);
 		List<EnvAO> resultList = new ListUtil<Env, EnvAO>().copyList(list.getResult(),
 				EnvAO.class);
 		result.setResult(resultList);
@@ -142,27 +145,29 @@ public class EnvController {
 
 	/**
 	 * 根据集群名命名空间名查询命名空间信息（有权限校验）
+	 *
 	 * @param clusterName,envName
 	 * @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.ao.ClusterAO>
 	 * @date 2020/3/16
 	 * @ahthor MddandPyy
 	 */
 	@GetMapping("/clusterAndEnvName")
-	public ExecuteResult<EnvAO> getEnvByName(@RequestParam("clusterName") String clusterName,@RequestParam("envName") String envName){
+	public ExecuteResult<EnvAO> getEnvByName(@RequestParam("clusterName") String clusterName,
+											 @RequestParam("envName") String envName) throws ApiException {
 		ExecuteResult<EnvAO> result = new ExecuteResult<>();
 		List<Cluster> clusters = clusterDao.getClusterByName(clusterName);
-		if(clusters.size()!=0){
-			if(clusters.size()==1){
+		if (clusters.size() != 0) {
+			if (clusters.size() == 1) {
 				Cluster cluster = clusters.get(0);
-				Env env = envDao.getEnvByClusterAndNamespace(cluster.getId(),envName);
-				if(env!=null){
-					return k8sEnvService.getEnvByEnvAndClusterId(env.getId(),cluster.getId());
+				Env env = envDao.getEnvByClusterAndNamespace(cluster.getId(), envName);
+				if (env != null) {
+					return k8sEnvService.getEnvByEnvAndClusterId(env.getId(), cluster.getId());
 				}
-			}else{
+			} else {
 				result.setCode(Code.FAILED);
 				// Cluster name already exists.
 				//result.addErrorMessage("存在同名cluster");
-				String message = messageUtils.matchMessage("M0031",new Object[]{},Boolean.TRUE);
+				String message = messageUtils.matchMessage("M0031", new Object[]{}, Boolean.TRUE);
 				result.addErrorMessage(message);
 				return result;
 			}
@@ -172,13 +177,14 @@ public class EnvController {
 
 	/**
 	 * 查询env上挂的service，用于删除集群前的校验
+	 *
 	 * @param envId
 	 * @return com.ladeit.common.ExecuteResult<com.ladeit.pojo.ao.ServiceAO>
 	 * @date 2020/3/18
 	 * @ahthor MddandPyy
 	 */
 	@GetMapping("/service")
-	public ExecuteResult<List<ServiceAO>> getEnvService(@RequestParam("EnvId") String envId){
+	public ExecuteResult<List<ServiceAO>> getEnvService(@RequestParam("EnvId") String envId) {
 		return k8sEnvService.getEnvService(envId);
 	}
 }

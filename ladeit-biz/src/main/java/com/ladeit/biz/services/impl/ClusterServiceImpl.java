@@ -94,8 +94,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 */
 	@Override
 	@Transactional
-	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException,
-			InterruptedException {
+	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster clusterexit = clusterDao.getClusterOneByName(cluster.getK8sName());
 		if (clusterexit != null) {
@@ -475,7 +474,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群下人员信息(不分页)
 	 *
 	 * @param clusterId
-	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.UserClusterRelationAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.UserClusterRelationAO>>
 	 * @date 2020/2/2
 	 * @ahthor MddandPyy
 	 */
@@ -515,7 +514,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询要加入的人员信息
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.SeriveGroupUserAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.SeriveGroupUserAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -746,7 +745,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)根据当前登录人
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List               <               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2019/12/4
 	 * @ahthor MddandPyy
 	 */
@@ -771,7 +770,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
@@ -803,7 +802,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * 查询集群列表(集群和集群下的环境)分页
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager               <               com.ladeit.pojo.ao.ClusterAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.ClusterAO>>
 	 * @date 2020/2/10
 	 * @ahthor MddandPyy
 	 */
