@@ -31,7 +31,7 @@ public class EventStarter implements CommandLineRunner {
 		List<Env> envs = envRes.getResult();
 		if (envs != null && !envs.isEmpty()) {
 			for (Env env : envs) {
-				//this.eventHandler.put(env.getId(),null);
+				this.eventHandler.put(env.getId(),null);
 			}
 		}
 	}

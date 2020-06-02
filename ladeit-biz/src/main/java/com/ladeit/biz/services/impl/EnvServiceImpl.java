@@ -255,7 +255,23 @@ public class EnvServiceImpl implements EnvService {
 	@Override
 	@Authority(type = "env", level = "W")
 	@Transactional
-	public ExecuteResult<String> deleteEnv(String envId, EnvAO bzK8sEnvAO) throws IOException {
+	public ExecuteResult<String> deleteEnv(String envId, EnvAO bzK8sEnvAO) throws IOException, ApiException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		Env env = envDao.getEnvById(envId);
+		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
+		if (env != null) {
+			env.setIsdel(true);
+			envDao.updateEnv(env);
+			this.k8sClusterManager.deleteNamespace(cluster.getK8sKubeconfig(), env.getNamespace());
+		}
+		this.eventHandler.remove(envId);
+		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
+		result.setResult(message);
+		return result;
+	}
+
+	@Override
+	public ExecuteResult<String> deleteEnvIgnoreK8s(String envId, EnvAO bzK8sEnvAO) throws IOException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Env env = envDao.getEnvById(envId);
 		if (env != null) {
@@ -272,7 +288,7 @@ public class EnvServiceImpl implements EnvService {
 	 * 查询env
 	 *
 	 * @param pager
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager   <   com.ladeit.pojo.doo.Env>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.doo.Env>>
 	 * @author falcomlife
 	 * @date 20-4-10
 	 * @version 1.0.0
@@ -499,7 +515,7 @@ public class EnvServiceImpl implements EnvService {
 	 * 获取所有的env
 	 *
 	 * @param
-	 * @return com.ladeit.common.ExecuteResult<java.util.List   <   com.ladeit.pojo.doo.Env>>
+	 * @return com.ladeit.common.ExecuteResult<java.util.List<com.ladeit.pojo.doo.Env>>
 	 * @author falcomlife
 	 * @date 20-4-10
 	 * @version 1.0.0

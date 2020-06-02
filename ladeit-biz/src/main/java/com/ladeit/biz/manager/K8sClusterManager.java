@@ -298,5 +298,17 @@ public interface K8sClusterManager {
 	 * @version 1.0.0
 	 */
 	V1Namespace createNamespace(V1Namespace namespace, String config) throws ApiException;
+
+	/**
+	 * 删除namespace
+	 *
+	 * @param k8sKubeconfig
+	 * @param namespace
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-6-2
+	 * @version 1.0.0
+	 */
+	void deleteNamespace(String k8sKubeconfig, String namespace) throws ApiException;
 }
 

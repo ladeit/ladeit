@@ -1052,9 +1052,9 @@ public class ClusterServiceImpl implements ClusterService {
 			namespacesOld.removeAll(envsNew);
 			// 取交集
 			envsNew.retainAll(namespacesNew);
-			// 针对k8s已经中删除的namespace，env做逻辑删除
+			// 针对k8s中已经删除的namespace，env做逻辑删除
 			for (String name : envsOld) {
-				this.envService.deleteEnv(envMaps.get(name).getId(), null);
+				this.envService.deleteEnvIgnoreK8s(envMaps.get(name).getId(), null);
 			}
 			// 针对k8s中新加的namespace，env做新增
 			for (String name : namespacesOld) {

@@ -3,6 +3,7 @@ package com.ladeit.biz.manager.impl;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.ladeit.biz.manager.K8sClusterManager;
 import com.ladeit.common.ExecuteResult;
 import com.ladeit.common.system.Code;
@@ -89,7 +90,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 */
 	@Override
 	public List<V1ReplicationController> getReplicationControllers(String serviceId, String config,
-																String namespace) throws ApiException {
+																   String namespace) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		V1ReplicationControllerList replicationControllerList = coreApi.listNamespacedReplicationController(namespace,
 				null, null, null, null, null, null, null, null, null);
@@ -443,7 +444,7 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	 */
 	@Override
 	public List<V1PersistentVolumeClaim> getPersistentVolumeClaims(String serviceId, String config,
-																String namespace) throws ApiException {
+																   String namespace) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
 		V1PersistentVolumeClaimList v1PersistentVolumeClaims = coreApi.listNamespacedPersistentVolumeClaim(namespace,
 				null, null, null, null, null, null, null, null, null);
@@ -645,6 +646,29 @@ public class K8sClusterManagerImpl implements K8sClusterManager {
 	@Override
 	public V1Namespace createNamespace(V1Namespace namespace, String config) throws ApiException {
 		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
-		return coreApi.createNamespace(namespace,null,null,null);
+		return coreApi.createNamespace(namespace, null, null, null);
+	}
+
+
+	/**
+	 * 删除namespace
+	 *
+	 * @param k8sKubeconfig
+	 * @param namespace
+	 * @return void
+	 * @author falcomlife
+	 * @date 20-6-2
+	 * @version 1.0.0
+	 */
+	@Override
+	public void deleteNamespace(String k8sKubeconfig, String namespace) throws ApiException {
+		CoreV1Api coreApi = (CoreV1Api) K8sClientUtil.get(k8sKubeconfig, CoreV1Api.class);
+		V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
+		try {
+			coreApi.deleteNamespace(namespace, v1DeleteOptions, null, null, null, null, null);
+		} catch (JsonSyntaxException e) {
+			// TODO 抛异常，但是资源可以删除
+			log.error(e.getMessage(), e);
+		}
 	}
 }

@@ -64,7 +64,17 @@ public interface EnvService {
 	 * @date 2020/3/17
 	 * @ahthor MddandPyy
 	 */
-	ExecuteResult<String> deleteEnv(String envId, EnvAO bzK8sEnvAO) throws IOException;
+	ExecuteResult<String> deleteEnv(String envId, EnvAO bzK8sEnvAO) throws IOException, ApiException;
+
+	/**
+	 * 删除env
+	 *
+	 * @param bzK8sEnvAO
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @date 2020/3/17
+	 * @ahthor MddandPyy
+	 */
+	ExecuteResult<String> deleteEnvIgnoreK8s(String envId, EnvAO bzK8sEnvAO) throws IOException, ApiException;
 
 	/**
 	 * 查询env

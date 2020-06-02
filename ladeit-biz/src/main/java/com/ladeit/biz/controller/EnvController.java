@@ -89,7 +89,7 @@ public class EnvController {
 	 * @ahthor MddandPyy
 	 */
 	@DeleteMapping("")
-	public ExecuteResult<String> deleteEnv(@RequestBody EnvAO bzK8sEnvAO) throws IOException {
+	public ExecuteResult<String> deleteEnv(@RequestBody EnvAO bzK8sEnvAO) throws IOException, ApiException {
 		return this.k8sEnvService.deleteEnv(bzK8sEnvAO.getId(), bzK8sEnvAO);
 	}
 
