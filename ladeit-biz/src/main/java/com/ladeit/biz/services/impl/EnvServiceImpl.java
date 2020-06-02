@@ -107,6 +107,7 @@ public class EnvServiceImpl implements EnvService {
 		V1Namespace v1Namespace = this.clusterManager.createNamespace(namespace, cluster.getK8sKubeconfig());
 		env.setId(v1Namespace.getMetadata().getUid());
 		ExecuteResult<String> result = this.createEnvWithoutK8s(env);
+		this.applyResourceQuota(env, cluster.getK8sKubeconfig());
 		this.eventHandler.put(env.getId(), null);
 		String message = messageUtils.matchMessage("M0100", new Object[]{}, Boolean.TRUE);
 		result.setResult(message);

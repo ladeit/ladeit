@@ -43,7 +43,15 @@ public interface EnvService {
 	 */
 	ExecuteResult<String> createEnv(Env env) throws IOException, ApiException;
 
-	@Transactional
+	/**
+	 * 创建一个env不创建k8s资源
+	 *
+	 * @param env
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-6-2
+	 * @version 1.0.0
+	 */
 	ExecuteResult<String> createEnvWithoutK8s(Env env) throws ApiException, IOException;
 
 	/**
