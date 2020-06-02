@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @program: ladeit
@@ -153,6 +154,9 @@ public class Env {
 
 	@Column(name = "disable")
 	private String disable;
+
+	@Transient
+	private Map<String,Long> podCount;
 
 	@Transient
 	private List<Occupy> occupyCpuReq;

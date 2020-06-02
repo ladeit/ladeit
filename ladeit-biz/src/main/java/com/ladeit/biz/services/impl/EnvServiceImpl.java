@@ -362,16 +362,21 @@ public class EnvServiceImpl implements EnvService {
 			envRes.setOccupyCpuLimit(occupiesCpuLimit);
 			envRes.setOccupyMemLimit(occupiesMemLimit);
 			// 初始化占用资源数量的值
-			BigDecimal cpuReqSum = new BigDecimal(0);
-			BigDecimal memReqSum = new BigDecimal(0);
-			BigDecimal cpuLimitSum = new BigDecimal(0);
-			BigDecimal memLimitSum = new BigDecimal(0);
+//			BigDecimal cpuReqSum = new BigDecimal(0);
+//			BigDecimal memReqSum = new BigDecimal(0);
+//			BigDecimal cpuLimitSum = new BigDecimal(0);
+//			BigDecimal memLimitSum = new BigDecimal(0);
 			// 初始化命名空间所拥有的资源对象
 			BigDecimal namespaceCpuRequest = new BigDecimal(0);
 			BigDecimal namespaceMemRequest = new BigDecimal(0);
 			BigDecimal namespaceCpuLimit = new BigDecimal(0);
 			BigDecimal namespaceMemLimit = new BigDecimal(0);
+			Map<String, Long> mapResult = new HashMap<>();
 			if (podRes.getResult() != null && !podRes.getResult().isEmpty()) {
+				mapResult =
+						podRes.getResult().stream().map(pod -> pod.getStatus()).collect(Collectors.groupingBy(V1PodStatus::getPhase, Collectors.counting()));
+				Long all = mapResult.values().stream().reduce((i, j) -> i + j).get();
+				mapResult.put("SUM", all);
 				for (V1Pod pod : podRes.getResult()) {
 					// 获取每个pod占用的资源，封装成对象
 					Occupy occupyCpuReq = new Occupy();
@@ -400,14 +405,18 @@ public class EnvServiceImpl implements EnvService {
 						memLimit = memLimit.add(meml == null ? bigZero : meml);
 					}
 					// 累加所有pod的资源占用值
-					cpuReqSum = cpuReqSum.add(cpuRequest);
-					memReqSum = memReqSum.add(memRequest);
-					cpuLimitSum = cpuLimitSum.add(cpuLimit);
-					memLimitSum = memLimitSum.add(memLimit);
+//					cpuReqSum = cpuReqSum.add(cpuRequest);
+//					memReqSum = memReqSum.add(memRequest);
+//					cpuLimitSum = cpuLimitSum.add(cpuLimit);
+//					memLimitSum = memLimitSum.add(memLimit);
+					// 定义一个资源配额标记
+					boolean resourcequota = false;
 					// 查找到每个namespace的资源定义文件，获取namespace的资源值
 					if (resourceQuotas != null && !resourceQuotas.isEmpty()) {
 						for (V1ResourceQuota v1ResourceQuota : resourceQuotas) {
-							if(v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())){
+							if (v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())) {
+								// 如果命名空间里有资源配额对象，打开标记开关
+								resourcequota = true;
 								namespaceCpuRequest = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
 										"requests.cpu"), "cpu");
 								namespaceMemRequest = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
@@ -427,34 +436,39 @@ public class EnvServiceImpl implements EnvService {
 							}
 						}
 					}
-					// 资源占用对象的最终封装
-					occupyCpuReq.setName(pod.getMetadata().getName());
-					occupyMemReq.setName(pod.getMetadata().getName());
-					occupyCpuLimit.setName(pod.getMetadata().getName());
-					occupyMemLimit.setName(pod.getMetadata().getName());
-					occupyCpuReq.setNum(cpuRequest.longValue());
-					occupyMemReq.setNum(memRequest.longValue());
-					occupyCpuLimit.setNum(cpuLimit.longValue());
-					occupyMemLimit.setNum(memLimit.longValue());
-					occupyCpuReq.setPercentage(namespaceCpuRequest.equals(bigZero) ? 0 :
-							cpuRequest.divide(namespaceCpuRequest, 3, RoundingMode.HALF_UP).doubleValue());
-					occupyMemReq.setPercentage(namespaceMemRequest.equals(bigZero) ? 0 :
-							memRequest.divide(namespaceMemRequest, 3, RoundingMode.HALF_UP).doubleValue());
-					occupyCpuLimit.setPercentage(namespaceCpuLimit.equals(bigZero) ? 0 :
-							cpuLimit.divide(namespaceCpuLimit, 3, RoundingMode.HALF_UP).doubleValue());
-					occupyMemLimit.setPercentage(namespaceMemLimit.equals(bigZero) ? 0 :
-							memLimit.divide(namespaceMemLimit, 3, RoundingMode.HALF_UP).doubleValue());
-					occupyCpuReq.setEnvId(envRes.getId());
-					occupyMemReq.setEnvId(envRes.getId());
-					occupyCpuLimit.setEnvId(envRes.getId());
-					occupyMemLimit.setEnvId(envRes.getId());
-					// 放入资源占用列表中
-					occupiesCpuReq.add(occupyCpuReq);
-					occupiesMemReq.add(occupyMemReq);
-					occupiesCpuLimit.add(occupyCpuLimit);
-					occupiesMemLimit.add(occupyMemLimit);
+					if (resourcequota) {
+						// 资源占用对象的最终封装
+						occupyCpuReq.setName(pod.getMetadata().getName());
+						occupyMemReq.setName(pod.getMetadata().getName());
+						occupyCpuLimit.setName(pod.getMetadata().getName());
+						occupyMemLimit.setName(pod.getMetadata().getName());
+						occupyCpuReq.setNum(cpuRequest.longValue());
+						occupyMemReq.setNum(memRequest.longValue());
+						occupyCpuLimit.setNum(cpuLimit.longValue());
+						occupyMemLimit.setNum(memLimit.longValue());
+						occupyCpuReq.setPercentage(namespaceCpuRequest.equals(bigZero) ? 0 :
+								cpuRequest.divide(namespaceCpuRequest, 3, RoundingMode.HALF_UP).doubleValue());
+						occupyMemReq.setPercentage(namespaceMemRequest.equals(bigZero) ? 0 :
+								memRequest.divide(namespaceMemRequest, 3, RoundingMode.HALF_UP).doubleValue());
+						occupyCpuLimit.setPercentage(namespaceCpuLimit.equals(bigZero) ? 0 :
+								cpuLimit.divide(namespaceCpuLimit, 3, RoundingMode.HALF_UP).doubleValue());
+						occupyMemLimit.setPercentage(namespaceMemLimit.equals(bigZero) ? 0 :
+								memLimit.divide(namespaceMemLimit, 3, RoundingMode.HALF_UP).doubleValue());
+						occupyCpuReq.setEnvId(envRes.getId());
+						occupyMemReq.setEnvId(envRes.getId());
+						occupyCpuLimit.setEnvId(envRes.getId());
+						occupyMemLimit.setEnvId(envRes.getId());
+						// 放入资源占用列表中
+						occupiesCpuReq.add(occupyCpuReq);
+						occupiesMemReq.add(occupyMemReq);
+						occupiesCpuLimit.add(occupyCpuLimit);
+						occupiesMemLimit.add(occupyMemLimit);
+					}
 				}
+			} else {
+				mapResult.put("SUM", 0L);
 			}
+			envRes.setPodCount(mapResult);
 		}
 		result.setResult(listcombine);
 		return result;
