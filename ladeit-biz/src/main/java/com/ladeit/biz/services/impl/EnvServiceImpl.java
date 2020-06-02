@@ -344,48 +344,46 @@ public class EnvServiceImpl implements EnvService {
 		listCombine.addAll(listVisibility);
 		List<Env> listCombineBo = new ListUtil<Env, Env>().copyList(listCombine,
 				Env.class);
+		// 对整合好的env数据按照时间进行排序
 		List<Env> listcombine =
 				listCombineBo.stream().distinct().sorted(Comparator.comparing(Env::getCreateAt)).collect(Collectors.toList());
-//		if (StringUtils.isNotBlank(config)) {
-//			listcombine = this.getResourceQuotaInNamespace(listCombine, config);
-//		}
 		List<V1ResourceQuota> resourceQuotas = this.k8sClusterManager.getAllResourceQuota(config);
 		for (Env envRes : listcombine) {
+			// 获取每个namespace中的pod
 			ExecuteResult<List<V1Pod>> podRes = this.k8sWorkLoadsManager.getPodsInNamespace(envRes.getNamespace(),
 					config);
+			// 初始化占用资源对象
 			List<Occupy> occupiesCpuReq = new ArrayList<>();
 			List<Occupy> occupiesMemReq = new ArrayList<>();
 			List<Occupy> occupiesCpuLimit = new ArrayList<>();
 			List<Occupy> occupiesMemLimit = new ArrayList<>();
-
 			envRes.setOccupyCpuReq(occupiesCpuReq);
 			envRes.setOccupyMemReq(occupiesMemReq);
 			envRes.setOccupyCpuLimit(occupiesCpuLimit);
 			envRes.setOccupyMemLimit(occupiesMemLimit);
-
+			// 初始化占用资源数量的值
 			BigDecimal cpuReqSum = new BigDecimal(0);
 			BigDecimal memReqSum = new BigDecimal(0);
 			BigDecimal cpuLimitSum = new BigDecimal(0);
 			BigDecimal memLimitSum = new BigDecimal(0);
-
+			// 初始化命名空间所拥有的资源对象
 			BigDecimal namespaceCpuRequest = new BigDecimal(0);
 			BigDecimal namespaceMemRequest = new BigDecimal(0);
 			BigDecimal namespaceCpuLimit = new BigDecimal(0);
 			BigDecimal namespaceMemLimit = new BigDecimal(0);
-
 			if (podRes.getResult() != null && !podRes.getResult().isEmpty()) {
 				for (V1Pod pod : podRes.getResult()) {
+					// 获取每个pod占用的资源，封装成对象
 					Occupy occupyCpuReq = new Occupy();
 					Occupy occupyMemReq = new Occupy();
 					Occupy occupyCpuLimit = new Occupy();
 					Occupy occupyMemLimit = new Occupy();
-
 					BigDecimal cpuRequest = new BigDecimal(0);
 					BigDecimal memRequest = new BigDecimal(0);
 					BigDecimal cpuLimit = new BigDecimal(0);
 					BigDecimal memLimit = new BigDecimal(0);
-
 					for (V1Container v1Container : pod.getSpec().getContainers()) {
+						// 获取没给container占用的资源，累加在一起就是pod占用的资源
 						Map<String, Quantity> reqMap = v1Container.getResources().getRequests();
 						Map<String, Quantity> limitMap = v1Container.getResources().getLimits();
 						if (((reqMap != null && (reqMap.get("cpu") == null && reqMap.get("memory") == null)) && (limitMap != null && (limitMap.get("cpu") == null && limitMap.get("memory") == null))) || (reqMap == null || limitMap == null)) {
@@ -395,17 +393,18 @@ public class EnvServiceImpl implements EnvService {
 						BigDecimal memr = UnitUtil.quantityToNum(reqMap.get("memory"), "mem");
 						BigDecimal cpul = UnitUtil.quantityToNum(limitMap.get("cpu"), "cpu");
 						BigDecimal meml = UnitUtil.quantityToNum(limitMap.get("memory"), "mem");
+						// 累加每个pod中每个container的资源占用值
 						cpuRequest = cpuRequest.add(cpur == null ? bigZero : cpur);
 						memRequest = memRequest.add(memr == null ? bigZero : memr);
 						cpuLimit = cpuLimit.add(cpul == null ? bigZero : cpul);
 						memLimit = memLimit.add(meml == null ? bigZero : meml);
 					}
-
+					// 累加所有pod的资源占用值
 					cpuReqSum = cpuReqSum.add(cpuRequest);
 					memReqSum = memReqSum.add(memRequest);
 					cpuLimitSum = cpuLimitSum.add(cpuLimit);
 					memLimitSum = memLimitSum.add(memLimit);
-
+					// 查找到每个namespace的资源定义文件，获取namespace的资源值
 					if (resourceQuotas != null && !resourceQuotas.isEmpty()) {
 						for (V1ResourceQuota v1ResourceQuota : resourceQuotas) {
 							if(v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())){
@@ -417,7 +416,6 @@ public class EnvServiceImpl implements EnvService {
 										"limits.cpu"), "cpu");
 								namespaceMemLimit = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
 										"limits.memory"), "mem");
-
 								envRes.setCpuRequest(namespaceCpuRequest.intValue());
 								envRes.setCpuRequestUnit("m");
 								envRes.setMemRequest(namespaceMemRequest.intValue());
@@ -426,20 +424,18 @@ public class EnvServiceImpl implements EnvService {
 								envRes.setCpuLimitUnit("m");
 								envRes.setMemLimit(namespaceMemLimit.intValue());
 								envRes.setMemLimitUnit("m");
-
 							}
 						}
 					}
+					// 资源占用对象的最终封装
 					occupyCpuReq.setName(pod.getMetadata().getName());
 					occupyMemReq.setName(pod.getMetadata().getName());
 					occupyCpuLimit.setName(pod.getMetadata().getName());
 					occupyMemLimit.setName(pod.getMetadata().getName());
-
 					occupyCpuReq.setNum(cpuRequest.longValue());
 					occupyMemReq.setNum(memRequest.longValue());
 					occupyCpuLimit.setNum(cpuLimit.longValue());
 					occupyMemLimit.setNum(memLimit.longValue());
-
 					occupyCpuReq.setPercentage(namespaceCpuRequest.equals(bigZero) ? 0 :
 							cpuRequest.divide(namespaceCpuRequest, 3, RoundingMode.HALF_UP).doubleValue());
 					occupyMemReq.setPercentage(namespaceMemRequest.equals(bigZero) ? 0 :
@@ -448,12 +444,11 @@ public class EnvServiceImpl implements EnvService {
 							cpuLimit.divide(namespaceCpuLimit, 3, RoundingMode.HALF_UP).doubleValue());
 					occupyMemLimit.setPercentage(namespaceMemLimit.equals(bigZero) ? 0 :
 							memLimit.divide(namespaceMemLimit, 3, RoundingMode.HALF_UP).doubleValue());
-
 					occupyCpuReq.setEnvId(envRes.getId());
 					occupyMemReq.setEnvId(envRes.getId());
 					occupyCpuLimit.setEnvId(envRes.getId());
 					occupyMemLimit.setEnvId(envRes.getId());
-
+					// 放入资源占用列表中
 					occupiesCpuReq.add(occupyCpuReq);
 					occupiesMemReq.add(occupyMemReq);
 					occupiesCpuLimit.add(occupyCpuLimit);
