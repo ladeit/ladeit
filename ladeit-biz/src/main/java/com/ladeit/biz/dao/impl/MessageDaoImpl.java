@@ -60,7 +60,7 @@ public class MessageDaoImpl implements MessageDao {
             sqlQuery.setParameter("serviceGroupId",serviceGroupId);
         }
         if(!(type==null || type.trim().length()==0)){
-            if(!"normal".equals(type) && "110".equals(type)){
+            if(!"normal".equals(type) && !"110".equals(type)){
                 sqlQuery.setParameter("type",type);
             }
         }
