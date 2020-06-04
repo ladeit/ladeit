@@ -33,7 +33,7 @@ public class CommonConsant {
     public final static String MESSAGE_TYPE_9 = "90";
     //调整拓扑
     public final static String MESSAGE_TYPE_10 = "100";
-    //运行异常
+    //k8sevent返回运行异常
     public final static String MESSAGE_TYPE_11 = "110";
 
     //右上通知

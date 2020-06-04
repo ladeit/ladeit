@@ -50,7 +50,7 @@ public interface MessageService {
 	 * @ahthor MddandPyy
 	 */
 	ExecuteResult<Pager<SqlRow>> getUserMessageInfos(int currentPage, int pageSize, String readFlag, String serviceId,
-  String type);
+  String type, String level);
 
 	/**
 	 * 查询某条消息

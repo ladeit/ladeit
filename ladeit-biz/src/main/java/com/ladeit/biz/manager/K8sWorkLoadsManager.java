@@ -424,4 +424,14 @@ public interface K8sWorkLoadsManager {
 	 * @version 1.0.0
 	 */
 	V1StatefulSet getStatefulSetByName(String namespace, String name, String config) throws ApiException;
+
+	/**
+	* 获取所有的pod
+	* @author falcomlife
+	* @date 20-6-2
+	* @version 1.0.0
+	* @return java.util.List<io.kubernetes.client.models.V1Pod>
+	* @param config
+	*/
+	List<V1Pod> getAllPods(String config) throws ApiException;
 }

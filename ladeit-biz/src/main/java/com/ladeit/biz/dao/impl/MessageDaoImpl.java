@@ -7,6 +7,7 @@ import io.ebean.EbeanServer;
 import io.ebean.ExpressionList;
 import io.ebean.SqlQuery;
 import io.ebean.SqlRow;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -30,7 +31,7 @@ public class MessageDaoImpl implements MessageDao {
     }
 
     @Override
-    public List<SqlRow> queryMessageSqlrowPagerList(String userId, int currentPage, int pageSize, String readFlag,String serviceGroupId,String type) {
+    public List<SqlRow> queryMessageSqlrowPagerList(String userId, int currentPage, int pageSize, String readFlag,String serviceGroupId,String type ,String level) {
         StringBuffer sbf = new StringBuffer();
         sbf.append("select * from (select t1.*,t2.id messagestateid,t2.user_id,t2.read_flag,t3.username,t4.name servicename,t5.name servicegroupname from message t1 INNER JOIN message_state t2 on t1.id = t2.message_id LEFT JOIN user t3 on t1.operuser_id = t3.id  LEFT JOIN service t4 on t1.service_id = t4.id  LEFT JOIN service_group t5 on t1.service_group_id = t5.id  where t2.user_id =:userId ");
         if(!(readFlag==null || readFlag.trim().length()==0)){
@@ -52,6 +53,9 @@ public class MessageDaoImpl implements MessageDao {
                 sbf.append(" and t1.type=:type");
             }
         }
+		if(StringUtils.isNotBlank(level)){
+			sbf.append(" and t1.level =:level");
+		}
         int start = (currentPage-1)*pageSize;
         int end = pageSize;
         sbf.append(" order by t1.create_at DESC) t1 limit :start,:end ");
@@ -59,6 +63,9 @@ public class MessageDaoImpl implements MessageDao {
         if(!(serviceGroupId==null || serviceGroupId.trim().length()==0)){
             sqlQuery.setParameter("serviceGroupId",serviceGroupId);
         }
+		if(StringUtils.isNotBlank(level)){
+			sqlQuery.setParameter("level", level);
+		}
         if(!(type==null || type.trim().length()==0)){
             if(!"normal".equals(type) && !"110".equals(type)){
                 sqlQuery.setParameter("type",type);

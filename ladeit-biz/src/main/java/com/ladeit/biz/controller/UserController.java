@@ -150,6 +150,19 @@ public class UserController {
 	}
 
 	/**
+	* 判断密码是否相同
+	* @author falcomlife
+	* @date 20-6-4
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param
+	*/
+	@PostMapping("/{userId}/{password}")
+	public ExecuteResult<String> getPasswordIsSame(@PathVariable("userId") String userId,@PathVariable("password") String password) throws NoSuchAlgorithmException {
+		return this.userService.getPasswordIsSame(userId,password);
+	}
+
+	/**
 	 * 更新密码
 	 *
 	 * @param userAO

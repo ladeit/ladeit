@@ -56,4 +56,14 @@ public interface ImageService {
 	* @param id
 	*/
 	ExecuteResult<List<Image>> getImageByServiceId(String id);
+
+	/**
+	* shouco
+	* @author falcomlife
+	* @date 20-6-4
+	* @version 1.0.0
+	* @return com.ladeit.common.ExecuteResult<java.lang.String>
+	* @param image
+	*/
+	ExecuteResult<String> addImageManual(Image image);
 }

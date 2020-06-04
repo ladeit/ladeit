@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
 	 * 查询当前登录人活动列表
 	 *
 	 * @param currentPage, pageSize
-	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager                                                               <                                                               com.ladeit.pojo.ao.OperationAO>>
+	 * @return com.ladeit.common.ExecuteResult<com.ladeit.common.Pager<com.ladeit.pojo.ao.OperationAO>>
 	 * @date 2019/11/29
 	 * @ahthor MddandPyy
 	 */
@@ -321,6 +321,25 @@ public class UserServiceImpl implements UserService {
 		userInDatabase.setSalt(password[0]);
 		userInDatabase.setPassword(password[1]);
 		this.userDao.updateAdminPassword(userInDatabase);
+		return result;
+	}
+
+	/**
+	 * 判断密码是否相同
+	 *
+	 * @param userId
+	 * @param password
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-6-4
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> getPasswordIsSame(String userId, String password) throws NoSuchAlgorithmException {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		User userInDatabase = this.userDao.getUserById(userId);
+		boolean correctPassword = PasswordUtil.decode(password, userInDatabase.getSalt(), userInDatabase.getPassword());
+		result.setResult(correctPassword?"correct":"incorrect");
 		return result;
 	}
 }

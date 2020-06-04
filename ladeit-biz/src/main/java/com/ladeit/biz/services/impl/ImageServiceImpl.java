@@ -19,7 +19,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @program: ladeit
@@ -119,5 +121,23 @@ public class ImageServiceImpl implements ImageService {
 		result.setResult(list);
 		return result;
 
+	}
+
+	/**
+	 * 手动添加镜像
+	 *
+	 * @param image
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-6-4
+	 * @version 1.0.0
+	 */
+	@Override
+	public ExecuteResult<String> addImageManual(Image image) {
+		ExecuteResult<String> result = new ExecuteResult<>();
+		image.setId(UUID.randomUUID().toString());
+		image.setCreateAt(new Date());
+		this.imageDao.insert(image);
+		return result;
 	}
 }

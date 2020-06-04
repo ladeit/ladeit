@@ -393,12 +393,12 @@ public class MessageServiceImpl implements MessageService {
 	 */
 	@Override
 	public ExecuteResult<Pager<SqlRow>> getUserMessageInfos(int currentPage, int pageSize, String readFlag,
-															String serviceGroupId, String type) {
+															String serviceGroupId, String type, String level) {
 		ExecuteResult<Pager<SqlRow>> result = new ExecuteResult<Pager<SqlRow>>();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		String userId = user.getId();
 		List<SqlRow> messages = messageDao.queryMessageSqlrowPagerList(userId, currentPage, pageSize, readFlag,
-				serviceGroupId, type);
+				serviceGroupId, type, level);
 		int count = messageDao.queryMessageSqlrowCount(userId, readFlag, serviceGroupId, type);
 		Pager<SqlRow> pager = new Pager<>();
 		pager.setPageNum(currentPage);

@@ -14,7 +14,7 @@ import java.util.List;
 public interface MessageDao {
     void insert(Message message);
 
-    List<SqlRow> queryMessageSqlrowPagerList(String userId,int currentPage, int pageSize, String readFlag,String serviceGroupId,String type);
+    List<SqlRow> queryMessageSqlrowPagerList(String userId,int currentPage, int pageSize, String readFlag,String serviceGroupId,String type, String level);
 
     int queryMessageSqlrowCount(String userId,String readFlag,String serviceGroupId,String type);
 

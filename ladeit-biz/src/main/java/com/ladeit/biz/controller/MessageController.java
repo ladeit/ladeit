@@ -39,10 +39,11 @@ public class MessageController {
 	@GetMapping("/messages")
 	public ExecuteResult<Pager<SqlRow>> getUserMessageInfos(@RequestParam("currentPage") int currentPage,
 															@RequestParam("pageSize") int pageSize,
-															@RequestParam(value = "readFlag", required = false) String readFlag, 
-															@RequestParam(value = "serviceGroupId", required = false) String serviceGroupId, 
-															@RequestParam(value = "type", required = false) String type) {
-		return messageService.getUserMessageInfos(currentPage, pageSize, readFlag, serviceGroupId, type);
+															@RequestParam(value = "readFlag", required = false) String readFlag,
+															@RequestParam(value = "serviceGroupId", required = false) String serviceGroupId,
+															@RequestParam(value = "type", required = false) String type,
+															@RequestParam(value = "level", required = false) String level) {
+		return messageService.getUserMessageInfos(currentPage, pageSize, readFlag, serviceGroupId, type, level);
 	}
 
 	/**

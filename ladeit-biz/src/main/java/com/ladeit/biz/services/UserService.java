@@ -146,4 +146,16 @@ public interface UserService {
 	 * @version 1.0.0
 	 */
 	ExecuteResult<String> updateAdminPassword(User user, String newPassword) throws NoSuchAlgorithmException;
+
+	/**
+	 * 判断密码是否相同
+	 *
+	 * @param userId
+	 * @param password
+	 * @return com.ladeit.common.ExecuteResult<java.lang.String>
+	 * @author falcomlife
+	 * @date 20-6-4
+	 * @version 1.0.0
+	 */
+	ExecuteResult<String> getPasswordIsSame(String userId, String password) throws NoSuchAlgorithmException;
 }

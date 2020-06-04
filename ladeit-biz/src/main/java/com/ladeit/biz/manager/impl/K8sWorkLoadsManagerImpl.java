@@ -1452,4 +1452,18 @@ public class K8sWorkLoadsManagerImpl implements K8sWorkLoadsManager {
 			return !statefulSets.isEmpty() ? statefulSets.get(0) : null;
 		}
 	}
+
+	/**
+	* 获取所有的pod
+	* @author falcomlife
+	* @date 20-6-2
+	* @version 1.0.0
+	* @return java.util.List<io.kubernetes.client.models.V1Pod>
+	* @param config
+	*/
+	@Override
+	public List<V1Pod> getAllPods(String config) throws ApiException {
+		CoreV1Api v1Api = (CoreV1Api) K8sClientUtil.get(config, CoreV1Api.class);
+		return v1Api.listPodForAllNamespaces(null,null,null,null,null,null,null,null,null).getItems();
+	}
 }
