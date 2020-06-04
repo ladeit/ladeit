@@ -19,6 +19,7 @@ import com.ladeit.util.auth.PasswordUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -266,18 +267,20 @@ public class UserServiceImpl implements UserService {
 	 * @version 1.0.0
 	 */
 	@Override
+	@Transactional
 	public ExecuteResult<String> updatePassword(User user, String newPassword) throws NoSuchAlgorithmException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		User userInDatabase = this.getUserByUsername(user.getUsername());
 		boolean flag = PasswordUtil.decode(user.getPassword(), userInDatabase.getSalt(), userInDatabase.getPassword());
 		if (flag) {
 			String[] password = PasswordUtil.encode(newPassword);
-			user.setSalt(password[0]);
-			user.setPassword(password[1]);
-			this.userDao.update(user);
+			userInDatabase.setSalt(password[0]);
+			userInDatabase.setPassword(password[1]);
+			this.userDao.update(userInDatabase);
 		} else {
 			String message = messageUtils.matchMessage("M0032", new Object[]{}, Boolean.TRUE);
-			result.setResult(message);
+			result.addWarningMessage(message);
+			result.setCode(Code.NOUSER_FAILPASSWORD);
 		}
 		return result;
 	}
