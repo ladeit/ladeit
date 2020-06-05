@@ -276,6 +276,7 @@ public class UserServiceImpl implements UserService {
 			String[] password = PasswordUtil.encode(newPassword);
 			userInDatabase.setSalt(password[0]);
 			userInDatabase.setPassword(password[1]);
+			userInDatabase.setUpdateAt(new Date());
 			this.userDao.update(userInDatabase);
 		} else {
 			String message = messageUtils.matchMessage("M0032", new Object[]{}, Boolean.TRUE);
