@@ -415,7 +415,6 @@ public class EnvServiceImpl implements EnvService {
 						Occupy occupyMemLimit = new Occupy();
 						Occupy occupyCpuUsed = new Occupy();
 						Occupy occupyMemUsed = new Occupy();
-
 						// 获取所有的实际占用
 						BigDecimal cpuUsedSum = new BigDecimal(0);
 						BigDecimal memUsedSum = new BigDecimal(0);
@@ -426,13 +425,28 @@ public class EnvServiceImpl implements EnvService {
 						for (PodMetric podMetric:podMetricList) {
 							// 找到该pod的实际占用
 							for (Container container:podMetric.getContainers()) {
-								String cpuUsedStr = container.getUsage().getCpu().replace("n", "");
-								String memUsedStr = container.getUsage().getMemory().replace("Ki", "");
-								cpuUsedSum = cpuUsedSum.add(new BigDecimal(StringUtils.isNotBlank(cpuUsedStr)?cpuUsedStr:"0"));
-								memUsedSum = memUsedSum.add(new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0"));
+								String cpuStr = container.getUsage().getCpu();
+								String memStr = container.getUsage().getMemory();
+								String cpuUsedStr;
+								if(cpuStr.contains("n")){
+									cpuUsedStr = cpuStr.replace("n", "");
+									BigDecimal cpuUsedContainer = new BigDecimal(StringUtils.isNotBlank(cpuUsedStr)?cpuUsedStr:"0");
+									cpuUsedContainer = cpuUsedContainer.divide(big1000).divide(big1000,3, RoundingMode.HALF_UP);
+									cpuUsedSum = cpuUsedSum.add(cpuUsedContainer);
+								}
+								String memUsedStr;
+								if(memStr.contains("Ki")){
+									memUsedStr = memStr.replace("Ki", "");
+									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0");
+									memUsedContainer = memUsedContainer.divide(big1024,3, RoundingMode.HALF_UP).divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
+									memUsedSum = memUsedSum.add(memUsedContainer);
+								}else if(memStr.contains("Mi")){
+									memUsedStr = memStr.replace("Mi", "");
+									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0");
+									memUsedContainer = memUsedContainer.divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
+									memUsedSum = memUsedSum.add(memUsedContainer);
+								}
 							}
-							cpuUsedSum = cpuUsedSum.divide(big1000).divide(big1000,3, RoundingMode.HALF_UP);
-							memUsedSum = memUsedSum.divide(big1024,3, RoundingMode.HALF_UP).divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
 						}
 						occupyCpuUsed.setName(pod.getMetadata().getName());
 						occupyCpuUsed.setEnvId(envRes.getId());
@@ -493,7 +507,6 @@ public class EnvServiceImpl implements EnvService {
 							occupyMemReq.setEnvId(envRes.getId());
 							occupyCpuLimit.setEnvId(envRes.getId());
 							occupyMemLimit.setEnvId(envRes.getId());
-
 							// 放入资源占用列表中
 							occupiesCpuReq.add(occupyCpuReq);
 							occupiesMemReq.add(occupyMemReq);
