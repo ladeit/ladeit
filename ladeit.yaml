@@ -23,7 +23,7 @@ items:
           name: ladeit
           env:
           - name: LADEIT_WEBKUBECTL_HOST
-            value: "com.ladeit.example"
+            value: "172.16.77.154:30002"
           ports:
           - containerPort: 8000
             protocol: TCP
@@ -58,6 +58,8 @@ items:
           ports:
           - containerPort: 8080
             protocol: TCP
+          securityContext:
+            privileged: true
           resources:
             limits:
               cpu: 1000m

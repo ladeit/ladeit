@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -61,9 +62,10 @@ public class UserController {
 	 * @version 1.0.0
 	 */
 	@PostMapping
-	public ExecuteResult<UserAO> checkIn(@RequestBody UserAO userAO) throws NoSuchAlgorithmException {
+	public ExecuteResult<UserAO> checkIn(@RequestBody UserAO userAO, @RequestHeader("lan") String lan) throws NoSuchAlgorithmException {
 		ExecuteResult<UserAO> result = new ExecuteResult<UserAO>();
 		User user = new User();
+		user.setLan(lan);
 		BeanUtils.copyProperties(userAO, user);
 		ExecuteResult<User> resultdo = this.userService.checkIn(user);
 		new ExecuteResultUtil<User>().copyInfoSourceToTarget(resultdo, result);

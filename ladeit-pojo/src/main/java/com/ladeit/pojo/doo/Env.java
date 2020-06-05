@@ -169,4 +169,10 @@ public class Env {
 
 	@Transient
 	private List<Occupy> occupyMemLimit;
+
+	@Transient
+	private List<Occupy> occupyCpuUsed;
+
+	@Transient
+	private List<Occupy> occupyMemUsed;
 }

@@ -161,8 +161,15 @@ public class EventsSubcriber {
 								currentRev = v1event.getMetadata().getResourceVersion();
 								String kind = v1event.getInvolvedObject().getKind();
 								String uid = v1event.getInvolvedObject().getUid();
-								ExecuteResult<JSONObject> result = resourceService.getResourceByUid(config,
-										v1event.getInvolvedObject().getUid(), v1event.getInvolvedObject().getKind());
+								ExecuteResult<JSONObject> result = null;
+								try {
+									result = resourceService.getResourceByUid(config,
+											v1event.getInvolvedObject().getUid(),
+											v1event.getInvolvedObject().getKind());
+								} catch (Exception e) {
+									// 如果未找到相应资源，跳过
+									continue;
+								}
 								switch (result.getCode()) {
 									case Code.SUCCESS:
 										JSONObject jo = result.getResult();
@@ -339,9 +346,11 @@ public class EventsSubcriber {
 			if ("Pod".equals(kind) && "Started".equals(event.getReason()) && !"istio-proxy".equals(event.getInvolvedObject().getName()) && !"istio-init".equals(event.getInvolvedObject().getName())) {
 //				if (jo.getJSONObject("metadata").getJSONArray("ownerReferences") != null) {
 //					String parentUid =
-//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0))).getString("uid");
+//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0)))
+// .getString("uid");
 //					String parentKind =
-//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0))).getString("kind");
+//							((JSONObject) (jo.getJSONObject("metadata").getJSONArray("ownerReferences").get(0)))
+// .getString("kind");
 //					ExecuteResult<JSONObject> parentRes = resourceService.getResourceByUid(config, parentUid,
 //							parentKind);
 //					JSONObject parent = parentRes.getResult();
@@ -349,8 +358,8 @@ public class EventsSubcriber {
 //						Integer replicas = parent.getJSONObject("spec").getInteger("replicas");
 //						Integer newReplicas = parent.getJSONObject("status").getInteger("replicas");
 //						if (replicas != null && replicas.equals(newReplicas)) {
-							this.releaseLifecycleMonitor(jo);
-							result.setStatus("0");
+				this.releaseLifecycleMonitor(jo);
+				result.setStatus("0");
 //						}
 //					}
 //				}
@@ -423,7 +432,7 @@ public class EventsSubcriber {
 			} else {
 				Integer replicas = owner.getJSONObject("spec").getInteger("replicas");
 				Integer readyReplicas = owner.getJSONObject("status").getInteger("replicas");
-				log.info(readyReplicas+"<<>>"+replicas);
+				log.info(readyReplicas + "<<>>" + replicas);
 				if (readyReplicas != null && replicas != null && readyReplicas.equals(replicas)) {
 					int[] type = {4, 8, 10, 11};
 					boolean update = false;

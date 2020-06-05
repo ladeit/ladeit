@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
 		String username = user.getUsername();
 		User u = this.userDao.getUserByUsername(username);
 		if (u != null) {
-			String message = messageUtils.matchMessage("M0029", new Object[]{}, Boolean.TRUE);
+			String message = user.getLan().equals("en-US")?"The username already exists":"用户名已经存在";
 			result.addWarningMessage(message);
 			result.setCode(Code.USER_EXIT);
 		} else {
@@ -279,7 +279,7 @@ public class UserServiceImpl implements UserService {
 			userInDatabase.setUpdateAt(new Date());
 			this.userDao.update(userInDatabase);
 		} else {
-			String message = messageUtils.matchMessage("M0032", new Object[]{}, Boolean.TRUE);
+			String message = messageUtils.matchMessage("M0038", new Object[]{}, Boolean.TRUE);
 			result.addWarningMessage(message);
 			result.setCode(Code.NOUSER_FAILPASSWORD);
 		}

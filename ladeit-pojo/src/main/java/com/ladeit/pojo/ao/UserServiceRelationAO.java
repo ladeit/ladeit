@@ -15,30 +15,25 @@ public class UserServiceRelationAO {
 	/**
 	 * id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String id;
 
 	/**
 	 * user_id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String userId;
 
 	/**
 	 * service_id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String serviceId;
 
 	/**
 	 * admin/regular  备用字段
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String accessLevel;
 
 	/**
 	 * 10/20/30/40/50
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String roleNum;
 }

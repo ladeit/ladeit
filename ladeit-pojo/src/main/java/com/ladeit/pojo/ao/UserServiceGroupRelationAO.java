@@ -15,25 +15,21 @@ public class UserServiceGroupRelationAO {
 	/**
 	 * id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String id;
 
 	/**
 	 * user_id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String userId;
 
 	/**
 	 * service_group_id
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String serviceGroupId;
 
 	/**
 	 * admin/regular
 	 */
-	// @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String accessLevel;
 
 }
