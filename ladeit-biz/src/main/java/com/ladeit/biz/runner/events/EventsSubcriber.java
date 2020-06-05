@@ -175,7 +175,7 @@ public class EventsSubcriber {
 										JSONObject jo = result.getResult();
 										JSONObject labels = jo.getJSONObject("metadata").getJSONObject(
 												"labels");
-										if (labels != null) {
+										if (labels != null && StringUtils.isNotBlank(labels.getString("serviceId"))) {
 											String serviceId = labels.getString("serviceId");
 											ExecuteResult<Service> s = serviceService.getById(serviceId);
 											if (s.getResult() == null) {
@@ -384,7 +384,6 @@ public class EventsSubcriber {
 
 	@Transactional
 	public void warningBussiness(V1Event event, String serviceId, Service s) throws IOException {
-
 		ServiceGroupService serviceGroupService = SpringBean.getObject(ServiceGroupService.class);
 		MessageService messageService = SpringBean.getObject(MessageService.class);
 		// 如果service已经被删除了，这里就不用再执行逻辑了

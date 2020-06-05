@@ -426,8 +426,10 @@ public class EnvServiceImpl implements EnvService {
 						for (PodMetric podMetric:podMetricList) {
 							// 找到该pod的实际占用
 							for (Container container:podMetric.getContainers()) {
-								cpuUsedSum = cpuUsedSum.add(new BigDecimal(container.getUsage().getCpu().replace("n", "")));
-								memUsedSum = memUsedSum.add(new BigDecimal(container.getUsage().getMemory().replace("Ki", "")));
+								String cpuUsedStr = container.getUsage().getCpu().replace("n", "");
+								String memUsedStr = container.getUsage().getMemory().replace("Ki", "");
+								cpuUsedSum = cpuUsedSum.add(new BigDecimal(StringUtils.isNotBlank(cpuUsedStr)?cpuUsedStr:"0"));
+								memUsedSum = memUsedSum.add(new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0"));
 							}
 							cpuUsedSum = cpuUsedSum.divide(big1000).divide(big1000,3, RoundingMode.HALF_UP);
 							memUsedSum = memUsedSum.divide(big1024,3, RoundingMode.HALF_UP).divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
