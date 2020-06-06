@@ -380,8 +380,8 @@ public class EnvServiceImpl implements EnvService {
 			Map<String, Long> mapResult = new HashMap<>();
 			boolean resourcequota = false;
 			if (resourceQuotas != null && !resourceQuotas.isEmpty()) {
-				for (V1ResourceQuota v1ResourceQuota:resourceQuotas) {
-					if(v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())){
+				for (V1ResourceQuota v1ResourceQuota : resourceQuotas) {
+					if (v1ResourceQuota.getMetadata().getNamespace().equals(envRes.getNamespace())) {
 						resourcequota = true;
 						// 如果命名空间里有资源配额对象，打开标记开关
 						namespaceCpuRequest =
@@ -395,7 +395,7 @@ public class EnvServiceImpl implements EnvService {
 						namespaceMemLimit = UnitUtil.quantityToNum(v1ResourceQuota.getSpec().getHard().get(
 								"limits.memory"), "mem");
 						envRes.setCpuRequest(namespaceCpuRequest.intValue());
-						envRes.setCpuRequestUnit("m");
+							envRes.setCpuRequestUnit("m");
 						envRes.setMemRequest(namespaceMemRequest.intValue());
 						envRes.setMemRequestUnit("m");
 						envRes.setCpuLimit(namespaceCpuLimit.intValue());
@@ -422,28 +422,42 @@ public class EnvServiceImpl implements EnvService {
 								podMetrics.stream().filter(podMetric -> podMetric.getMetadata().getName().equals(pod.getMetadata().getName())).filter(podMetric -> podMetric.getMetadata().getNamespace().equals(envRes.getNamespace())).collect(Collectors.toList());
 						BigDecimal big1000 = new BigDecimal(1000);
 						BigDecimal big1024 = new BigDecimal(1024);
-						for (PodMetric podMetric:podMetricList) {
+						for (PodMetric podMetric : podMetricList) {
 							// 找到该pod的实际占用
-							for (Container container:podMetric.getContainers()) {
+							for (Container container : podMetric.getContainers()) {
 								String cpuStr = container.getUsage().getCpu();
 								String memStr = container.getUsage().getMemory();
 								String cpuUsedStr;
-								if(cpuStr.contains("n")){
+								if (cpuStr.contains("n")) {
 									cpuUsedStr = cpuStr.replace("n", "");
-									BigDecimal cpuUsedContainer = new BigDecimal(StringUtils.isNotBlank(cpuUsedStr)?cpuUsedStr:"0");
-									cpuUsedContainer = cpuUsedContainer.divide(big1000).divide(big1000,3, RoundingMode.HALF_UP);
+									BigDecimal cpuUsedContainer = new BigDecimal(StringUtils.isNotBlank(cpuUsedStr) ?
+											cpuUsedStr : "0");
+									cpuUsedContainer = cpuUsedContainer.divide(big1000).divide(big1000, 3,
+											RoundingMode.HALF_UP);
 									cpuUsedSum = cpuUsedSum.add(cpuUsedContainer);
 								}
 								String memUsedStr;
-								if(memStr.contains("Ki")){
+								if (memStr.contains("Ki")) {
 									memUsedStr = memStr.replace("Ki", "");
-									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0");
-									memUsedContainer = memUsedContainer.divide(big1024,3, RoundingMode.HALF_UP).divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
+									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
+											memUsedStr : "0");
+									memUsedContainer =
+											memUsedContainer.divide(big1024, 3, RoundingMode.HALF_UP).divide(big1024,
+													3, RoundingMode.HALF_UP).multiply(big1000);
 									memUsedSum = memUsedSum.add(memUsedContainer);
-								}else if(memStr.contains("Mi")){
+								} else if (memStr.contains("Mi")) {
 									memUsedStr = memStr.replace("Mi", "");
-									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr)?memUsedStr:"0");
-									memUsedContainer = memUsedContainer.divide(big1024,3, RoundingMode.HALF_UP).multiply(big1000);
+									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
+											memUsedStr : "0");
+									memUsedContainer =
+											memUsedContainer.divide(big1024, 3, RoundingMode.HALF_UP).multiply(big1000);
+									memUsedSum = memUsedSum.add(memUsedContainer);
+								} else if (memStr.contains("Gi")) {
+									memUsedStr = memStr.replace("Gi", "");
+									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
+											memUsedStr : "0");
+									memUsedContainer =
+											memUsedContainer.multiply(big1000);
 									memUsedSum = memUsedSum.add(memUsedContainer);
 								}
 							}
@@ -485,7 +499,7 @@ public class EnvServiceImpl implements EnvService {
 						memLimitSum = memLimitSum.add(memLimit);
 						// 定义一个资源配额标记
 						// 查找到每个namespace的资源定义文件，获取namespace的资源值
-						if(resourcequota){
+						if (resourcequota) {
 							// 资源占用对象的最终封装
 							occupyCpuReq.setName(pod.getMetadata().getName());
 							occupyMemReq.setName(pod.getMetadata().getName());
@@ -519,7 +533,7 @@ public class EnvServiceImpl implements EnvService {
 					}
 					envRes.setPodCount(mapResult);
 				}
-				if(resourcequota) {
+				if (resourcequota) {
 					BigDecimal freeCpuReq = namespaceCpuRequest.subtract(cpuReqSum);
 					BigDecimal freeMemReq = namespaceMemRequest.subtract(memReqSum);
 					BigDecimal freeCpuLimit = namespaceCpuLimit.subtract(cpuLimitSum);
@@ -550,9 +564,10 @@ public class EnvServiceImpl implements EnvService {
 					occupiesMemLimit.add(freeOccupyMemLimit);
 					resourcequota = false;
 				}
-				mapResult = pods.stream().filter(pod1 -> pod1.getMetadata().getNamespace().equals(envRes.getNamespace())).map(pod -> pod.getStatus()).collect(Collectors.groupingBy(V1PodStatus::getPhase, Collectors.counting()));
+				mapResult =
+						pods.stream().filter(pod1 -> pod1.getMetadata().getNamespace().equals(envRes.getNamespace())).map(pod -> pod.getStatus()).collect(Collectors.groupingBy(V1PodStatus::getPhase, Collectors.counting()));
 				Optional<Long> optionalMap = mapResult.values().stream().reduce((i, j) -> i + j);
-				Long all = optionalMap.isPresent()?optionalMap.get():0L;
+				Long all = optionalMap.isPresent() ? optionalMap.get() : 0L;
 				mapResult.put("SUM", all);
 				envRes.setPodCount(mapResult);
 			}

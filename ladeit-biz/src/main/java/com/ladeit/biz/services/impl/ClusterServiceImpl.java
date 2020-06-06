@@ -1132,6 +1132,7 @@ public class ClusterServiceImpl implements ClusterService {
 	 * @version 1.0.0
 	 */
 	@Override
+	@Authority(type = "cluster", level = "RW")
 	public ExecuteResult<String> webkubectl(String clusterId) throws IOException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster cluster = this.clusterDao.getClusterById(clusterId);

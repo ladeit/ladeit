@@ -142,7 +142,7 @@ public class EnvAO {
 
 	private List<Occupy> occupyMemLimit;
 
-	private List<Occupy> occupyCpuUsed;
+//	private List<Occupy> occupyCpuUsed;
 
-	private List<Occupy> occupyMemUsed;
+//	private List<Occupy> occupyMemUsed;
 }
