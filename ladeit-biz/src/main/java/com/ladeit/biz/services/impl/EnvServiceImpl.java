@@ -329,6 +329,8 @@ public class EnvServiceImpl implements EnvService {
 		BigDecimal bigZero = new BigDecimal(0);
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		// 先查询所有的公共env
+		Cluster cluster = this.k8sClusterService.getClusterById(env.getClusterId());
+		config = cluster.getK8sKubeconfig();
 		List<Env> envlist = this.envDao.getEnvList(env);
 		List<Env> listVisibility = new ArrayList<>();
 		for (Env e : envlist) {
