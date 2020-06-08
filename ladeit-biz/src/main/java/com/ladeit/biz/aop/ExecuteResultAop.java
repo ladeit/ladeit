@@ -76,7 +76,7 @@ public class ExecuteResultAop {
 		try {
 			Object obj = pjp.proceed();
 			if (obj instanceof ExecuteResult) {
-				// 针对ExecuteResult类型的返回返回进行转型
+				// 针对ExecuteResult类型的返回进行转型
 				result = (ExecuteResult) obj;
 			} else {
 				// 其他类型的返回不作处理
@@ -155,9 +155,6 @@ public class ExecuteResultAop {
 				} else if (result.getCode() >= Code.FAILED && result.getCode() < Code.AUTH_ERROR) {
 					// 针对在业务内try掉的异常，返回码是错误类型的，我们在这里统一向上抛出异常，触发spring事务管理回滚事务
 					throw new RuntimeException(result.getErrorMessages().get(0).toString());
-				} else if (result.getCode() > Code.SUCCESS && result.getCode() < Code.FAILED) {
-					// 针对在业务内try掉的异常，返回码是警告类型的，我们在这里统一向上抛出异常，触发spring事务管理回滚事务
-					throw new RuntimeException(result.getWarningMessages().get(0).toString());
 				}
 			} else {
 				// 返回值类型不是ExecuteResult的不作处理
@@ -170,7 +167,7 @@ public class ExecuteResultAop {
 			if (throwable instanceof ApiException) {
 				// k8s接口异常
 				result.setCode(Code.K8SWARN);
-				result.addWarningMessage(((ApiException) throwable).getResponseBody());
+				result.addErrorMessage(((ApiException) throwable).getResponseBody());
 				throw new RuntimeException(result.getWarningMessages().get(0).toString());
 			} else {
 				// 其他类型异常
@@ -183,8 +180,6 @@ public class ExecuteResultAop {
 					throw new RuntimeException(result.getErrorMessages().get(0).toString());
 				} else if (result.getCode() >= Code.FAILED && result.getCode() < Code.AUTH_ERROR) {
 					throw new RuntimeException(result.getErrorMessages().get(0).toString());
-				} else if (result.getCode() > Code.SUCCESS && result.getCode() < Code.FAILED) {
-					throw new RuntimeException(result.getWarningMessages().get(0).toString());
 				}
 
 			}

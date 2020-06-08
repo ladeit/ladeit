@@ -280,8 +280,8 @@ public class UserServiceImpl implements UserService {
 			this.userDao.update(userInDatabase);
 		} else {
 			String message = messageUtils.matchMessage("M0038", new Object[]{}, Boolean.TRUE);
-			result.addWarningMessage(message);
-			result.setCode(Code.NOUSER_FAILPASSWORD);
+			result.addErrorMessage(message);
+			result.setCode(Code.FAILPASSWORD);
 		}
 		return result;
 	}

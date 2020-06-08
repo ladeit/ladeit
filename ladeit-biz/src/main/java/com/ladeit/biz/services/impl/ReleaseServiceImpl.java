@@ -286,7 +286,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 								String message = this.k8sContainerManager.createByYaml(yamlAo,
 										cluster.getK8sKubeconfig(), name);
 								if (!"SUCCESS".equals(message)) {
-									result.addWarningMessage(message);
+									result.addErrorMessage(message);
 									result.setCode(Code.K8SWARN);
 								}
 							} else if (StringUtils.isNotBlank(yaml)) {
@@ -408,12 +408,12 @@ public class ReleaseServiceImpl implements ReleaseService {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0014", new Object[]{yamlAo.getKindType(), name},
 						Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 			} else if ("Conflict".equals(e.getLocalizedMessage())) {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0015", new Object[]{yamlAo.getKindType(),
 						e.getLocalizedMessage()}, Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 			}
 		}
 	}
@@ -1028,9 +1028,9 @@ public class ReleaseServiceImpl implements ReleaseService {
 		ExecuteResult<Service> s = this.serviceService.getById(service.getId());
 		Service servcieNow = s.getResult();
 		if (servcieNow == null) {
-			result.setCode(Code.NOTFOUND);
+			result.setCode(Code.NOT_FOUND_SERVICE);
 			String message = messageUtils.matchMessage("M0016", new Object[]{}, auto != null && !auto ? true : false);
-			result.addWarningMessage(message);
+			result.addErrorMessage(message);
 			return result;
 		}
 		if (!"-1".equals(servcieNow.getStatus()) && !"0".equals(servcieNow.getStatus()) && !"8".equals(servcieNow.getStatus())) {

@@ -24,15 +24,11 @@ public class Code {
 	 */
 	public static final int NOTFOUND = 101;
 	/**
-	 * k8s接口报错
-	 */
-	public static final int K8SWARN = 102;
-	/**
 	 * istio接口报错
 	 */
 	public static final int ISTIOWARN = 103;
 	/**
-	 * 登录用户名活密码错误
+	 * 登录用户名或密码错误
 	 */
 	public static final int NOUSER_FAILPASSWORD = 104;
 	/**
@@ -96,6 +92,21 @@ public class Code {
 	 */
 	public static final int STATUS_ERROR = 611;
 
+	/**
+	 * 未找到服务
+	 */
+
+	public static final int NOT_FOUND_SERVICE = 612;
+
+	/**
+	 * k8s接口报错
+	 */
+	public static final int K8SWARN = 613;
+
+	/**
+	* 密码错误
+	*/
+	public static final int FAILPASSWORD = 614;
 	/*
 	 * 1100号以后的异常给权限使用，可能造成前台重新登录
 	 */
@@ -104,5 +115,6 @@ public class Code {
 	 * 权限不匹配
 	 */
 	public static final int AUTH_ERROR = 1100;
+
 
 }

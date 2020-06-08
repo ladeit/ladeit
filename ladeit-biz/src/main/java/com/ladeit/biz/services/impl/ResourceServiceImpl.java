@@ -253,13 +253,13 @@ public class ResourceServiceImpl implements ResourceService {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0014", new Object[]{yamlAo.getKindType(), name},
 						Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 
 			} else if ("Conflict".equals(e.getLocalizedMessage())) {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0015", new Object[]{yamlAo.getKindType(),
 						e.getLocalizedMessage()}, Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 			}
 		}
 		return result;
@@ -316,13 +316,13 @@ public class ResourceServiceImpl implements ResourceService {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0014", new Object[]{yamlContentAO.getKindType(), name},
 						Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 
 			} else if ("Conflict".equals(e.getLocalizedMessage())) {
 				result.setCode(Code.K8SWARN);
 				String message = messageUtils.matchMessage("M0015", new Object[]{yamlContentAO.getKindType(),
 						e.getLocalizedMessage()}, Boolean.TRUE);
-				result.addWarningMessage(message);
+				result.addErrorMessage(message);
 			}
 		}
 		return result;
@@ -1989,6 +1989,11 @@ public class ResourceServiceImpl implements ResourceService {
 		Cluster cluster = this.clusterService.getClusterById(env.getClusterId());
 		ExecuteResult<Release> releaseRes = this.releaseService.getInUseReleaseByServiceId(serviceId);
 		Release release = releaseRes.getResult();
+		if(release==null){
+			result.setCode(Code.NOTFOUND);
+			result.addWarningMessage(messageUtils.matchMessage("M0039", new Object[]{}, Boolean.TRUE));
+			return result;
+		}
 		List<Object> objects = this.k8sWorkLoadsManager.getAll(cluster.getK8sKubeconfig(), null);
 		for (Object o : objects) {
 			JSONObject jo = JSON.parseObject(new io.kubernetes.client.JSON().serialize(o));
