@@ -23,7 +23,7 @@ items:
           name: ladeit
           env:
           - name: LADEIT_WEBKUBECTL_HOST
-            value: "172.16.77.154:30002"
+            value: "ladeit.example.com"
           ports:
           - containerPort: 8000
             protocol: TCP
@@ -53,7 +53,7 @@ items:
               cpu: 500m
               memory: 1Gi
         - image: kubeoperator/webkubectl:v2.4.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: webkubectl
           ports:
           - containerPort: 8080
