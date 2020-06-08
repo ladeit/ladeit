@@ -107,6 +107,11 @@ public class Code {
 	* 密码错误
 	*/
 	public static final int FAILPASSWORD = 614;
+
+	/**
+	 * 集群已经存在
+	 */
+	public static final int CLUSTER_EXIST = 615;
 	/*
 	 * 1100号以后的异常给权限使用，可能造成前台重新登录
 	 */

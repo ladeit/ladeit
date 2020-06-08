@@ -97,6 +97,17 @@ public class ClusterServiceImpl implements ClusterService {
 	public ExecuteResult<String> createCluster(Cluster cluster) throws IOException, ApiException {
 		ExecuteResult<String> result = new ExecuteResult<>();
 		Cluster clusterexit = clusterDao.getClusterOneByName(cluster.getK8sName());
+		V1Namespace defaultNamespace = this.clusterManager.getNamespace(cluster.getK8sKubeconfig(),"default");
+		ExecuteResult<List<Env>> envs = this.envService.getAllEnv();
+		if(envs.getResult()!=null && !envs.getResult().isEmpty()){
+			for (Env env:envs.getResult()) {
+				if (env.getId().equals(defaultNamespace.getMetadata().getUid())){
+					result.setCode(Code.CLUSTER_EXIST);
+					result.addErrorMessage(messageUtils.matchMessage("M0040", new Object[]{}, Boolean.TRUE));
+					return result;
+				}
+			}
+		}
 		if (clusterexit != null) {
 			result.setCode(Code.FAILED);
 			String message = messageUtils.matchMessage("M0003", new Object[]{}, Boolean.TRUE);
