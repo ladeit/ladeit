@@ -1,6 +1,7 @@
 package com.ladeit.util.k8s;
 
 import io.kubernetes.client.custom.Quantity;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
@@ -63,6 +64,9 @@ public class UnitUtil {
 		Matcher m = p.matcher(quantity.toSuffixedString());
 		result[0] = m.replaceAll("").trim();
 		result[1] = quantity.toSuffixedString().replace(result[0], "");
+		if("cpu".equals(type) && !StringUtils.isNotBlank(result[1])){
+			result[1] = "core";
+		}
 		return result;
 	}
 
