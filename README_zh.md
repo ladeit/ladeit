@@ -27,46 +27,46 @@ ladeit 是一个基于 [kubernetes](https://github.com/kubernetes/kubernetes) �
 
 ## Quick start
 
-> 安装完后请使用默认用户 `admin/admin` 登录。
 
 ### 试用
 
 docker
 ```
+// docker 启动不支持 webkubectl 功能
 docker run -p 8000:8000 ladeit/ladeit
 ```
 k8s
 ```
-kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit.yml"
 ```
 helm
 ``` 
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --version 0.3.6
+helm install ladeit/ladeit --version {LATEST_VERSION}
 ```
 
 ### 正式使用
 
 docker
 ```
+// docker 启动不支持 webkubectl 功能
 docker run -idt --name ladeit -p 8000:8000 -v PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
 k8s
 > 请创建 `persistent volume` 后执行: 
 ```
-kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit.yml"
 ```
 helm
 > 请创建 `persistent volume` 后执行: 
 ```
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.6
+helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version {LATEST_VERSION}
 ```
 
 ## Guide
 
 ## 截图
-![1](https://www.docker.com/sites/default/files/d8/styles/role_icon/public/2020-01/DesktopAction%402.png?itok=fSjduwO7)
 
 ## 计划
 

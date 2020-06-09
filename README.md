@@ -27,47 +27,46 @@ As the containerization and micro-service going on, the operation work are more 
 
 ## Quick start
 
-> Please use `admin/admin` to login after installation.
-
 ### For trial
 
 docker
 ```
+// webkubectl not supported with docker
 docker run -p 8000:8000 ladeit/ladeit
 ```
 k8s
 ```
-kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit.yml"
 ```
 helm
 ``` 
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --version 0.3.6
+helm install ladeit/ladeit --version {LATEST_VERSION}
 ```
 
 ### For official use
 
 docker
 ```
+// webkubectl not supported with docker
 docker run -idt --name ladeit -p 8000:8000 -v PATH_ON_HOST:/root/.ladeit ladeit/ladeit
 ```
 k8s
 > Please create a `persistent volume` and run: 
 ```
-kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit-k8s.yml"
+kubectl apply -f "https://raw.githubusercontent.com/ladeit/ladeit/master/ladeit.yml"
 ```
 helm
 > Please create a `persistent volume` and run: 
 ```
 helm repo add ladeit https://ladeit.github.io/charts
-helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version 0.3.6
+helm install ladeit/ladeit --set volume.enabled=true --set persistentVolumeClaim.enabled=true --version {LATEST_VERSION}
 ```
 
 ## Guide
 
 
 ## Screenshot
-![1](https://www.docker.com/sites/default/files/d8/styles/role_icon/public/2020-01/DesktopAction%402.png?itok=fSjduwO7)
 
 ## Next
 -  **deployment in union**
