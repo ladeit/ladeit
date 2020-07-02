@@ -29,7 +29,7 @@ datasource:
     validationQuery: SELECT 1
     initialSize: 3
     maxWait: 60000
-    filters: stat,wall
+    # filters: stat,wall
     logSlowSql: true
     type: com.alibaba.druid.pool.DruidDataSource
     testWhileIdle: true

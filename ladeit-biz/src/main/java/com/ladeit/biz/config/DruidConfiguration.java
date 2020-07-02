@@ -55,18 +55,13 @@ public class DruidConfiguration {
     @Value("${datasource.default.logSlowSql}")
     private String logSlowSql;
 
-    /**
-     * Method description
-     *
-     *
-     * @return
-     */
     @Bean(destroyMethod = "close", initMethod = "init", name = "defaultDs")
     @Primary
     public DataSource druidDataSource() {
         DruidDataSource datasource = new DruidDataSource();
 
         datasource.setUrl(dbUrl);
+        datasource.setDbType("sqlite");
         datasource.setUsername(username);
         datasource.setPassword(password);
         datasource.setInitialSize(initialSize);
@@ -91,14 +86,6 @@ public class DruidConfiguration {
         return datasource;
     }
 
-    /**
-     * druid监控页面配置
-     *
-     * @Title: druidServlet
-     * @Description:
-     * @author jiangyu
-     * @return ServletRegistrationBean
-     */
     @Bean
     public ServletRegistrationBean druidServlet() {
         ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean();
@@ -113,14 +100,6 @@ public class DruidConfiguration {
         return servletRegistrationBean;
     }
 
-    /**
-     * druid过滤器
-     *
-     * @Title: filterRegistrationBean
-     * @Description:
-     * @author jiangyu
-     * @return FilterRegistrationBean
-     */
     @Bean
     public FilterRegistrationBean filterRegistrationBean() {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
