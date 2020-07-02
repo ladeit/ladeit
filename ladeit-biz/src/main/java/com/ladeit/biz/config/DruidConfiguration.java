@@ -50,8 +50,8 @@ public class DruidConfiguration {
     private boolean testOnBorrow;
     @Value("${datasource.default.testOnReturn}")
     private boolean testOnReturn;
-    @Value("${datasource.default.filters}")
-    private String filters;
+    // @Value("${datasource.default.filters}")
+    // private String filters;
     @Value("${datasource.default.logSlowSql}")
     private String logSlowSql;
 
@@ -75,13 +75,13 @@ public class DruidConfiguration {
         datasource.setTestOnBorrow(testOnBorrow);
         datasource.setTestOnReturn(testOnReturn);
 
+        /*
         try {
             datasource.setFilters(filters);
         } catch (SQLException e) {
             logger.error(e.getMessage());
         }
-
-        logger.info("==============Database:" + dbUrl + "===============");
+        */
 
         return datasource;
     }
