@@ -167,6 +167,11 @@
 				<artifactId>istio-model-annotator</artifactId>
 				<version>1.1.1</version>
 			</dependency>
+			<dependency>
+				<groupId>org.xerial</groupId>
+				<artifactId>sqlite-jdbc</artifactId>
+				<version>3.32.3</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 

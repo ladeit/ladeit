@@ -49,7 +49,7 @@ public class UserEnvRelationDaoImpl implements UserEnvRelationDao {
 
     @Override
     public List<SqlRow> queryNopagerUsersByClusterId(String clusterId, String userId) {
-        return server.createSqlQuery("select  t1.namespace,t1.id envid,t2.access_level,t2.id,t1.cluster_id clusterid from (select * from env where isdel =0 ) t1 LEFT JOIN (select * from user_env_relation where user_id =:userId) t2 on t1.id = t2.env_id where t1.cluster_id =:clusterId ").setParameter("userId",userId).setParameter("clusterId",clusterId).findList();
+        return server.createSqlQuery("select  t1.namespace,t1.id envid,t2.access_level,t2.id,t1.cluster_id clusterid from (select * from env where isdel =0 ) t1 LEFT OUTER JOIN (select * from user_env_relation where user_id =:userId) t2 on t1.id = t2.env_id where t1.cluster_id =:clusterId ").setParameter("userId",userId).setParameter("clusterId",clusterId).findList();
     }
 
     @Override

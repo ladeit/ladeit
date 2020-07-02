@@ -23,6 +23,8 @@ management:
         include: "*"
 datasource:
   default:
+    url: jdbc:sqlite:~/.ladeit/sqlite/ladeit.db
+    driver: org.sqlite.JDBC
     minIdle: 5
     validationQuery: SELECT 1
     initialSize: 3

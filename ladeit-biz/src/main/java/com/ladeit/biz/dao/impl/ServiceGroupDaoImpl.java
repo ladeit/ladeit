@@ -67,8 +67,8 @@ public class ServiceGroupDaoImpl implements ServiceGroupDao {
                                                          String orderparam) {
 		StringBuffer sbf = new StringBuffer();
 		sbf.append("select t1.* from (select t1.*,t2.name groupname,t2.create_at groupcreateat,t2.create_by " +
-                "groupcreateby ,IFNULL(t3.c,0) imagenum from (select * from service where isdel = 0 ) t1 RIGHT JOIN " +
-                "(select * from service_group where isdel = 0) t2 on t1.service_group_id = t2.id LEFT JOIN (select " +
+                "groupcreateby ,IFNULL(t3.c,0) imagenum from (select * from service where isdel = 0 ) t1 LEFT OUTER JOIN " +
+                "(select * from service_group where isdel = 0) t2 on t1.service_group_id = t2.id LEFT OUTER JOIN (select " +
                 "count(1) c,service_id from image where isdel = 0 group by service_id) t3 on t1.id = t3.service_id " +
                 "where 1=1 ");
 		if (!(groupName == null || groupName.trim().length() == 0)) {
@@ -115,9 +115,9 @@ public class ServiceGroupDaoImpl implements ServiceGroupDao {
 	@Override
 	public int queryGroupSqlrowCount(String groupName) {
 		StringBuffer sbf = new StringBuffer();
-		sbf.append("select t1.* from (select t1.*,t2.name groupname,t2.create_at groupcreateat from (select * from " +
-                "service where isdel = 0 ) t1  RIGHT JOIN (select * from service_group where isdel = 0) t2 on t1" +
-                ".service_group_id = t2.id where 1=1 ");
+		sbf.append("select t1.* from (select t1.*,t2.name groupname,t2.create_at groupcreateat from " +
+                "(select * from service_group where isdel = 0) t2 LEFT OUTER JOIN (select * from service where isdel = 0 ) t1 " +
+                " on t1.service_group_id = t2.id where 1=1 ");
 		if (!(groupName == null || groupName.trim().length() == 0)) {
 			sbf.append(" and t2.name like '%'" + groupName + "'%' ");
 		}
@@ -172,7 +172,7 @@ public class ServiceGroupDaoImpl implements ServiceGroupDao {
 
     @Override
     public List<SqlRow> queryUsersByGroup(String groupId) {
-		return this.server.createSqlQuery("select t1.user_id,t2.username from user_service_group_relation t1 LEFT JOIN user t2 on t1.user_id = t2.id where t1.service_group_id =:groupId").setParameter("groupId",groupId).findList();
+		return this.server.createSqlQuery("select t1.user_id,t2.username from user_service_group_relation t1 LEFT OUTER JOIN user t2 on t1.user_id = t2.id where t1.service_group_id =:groupId").setParameter("groupId",groupId).findList();
     }
 
     @Override

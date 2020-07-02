@@ -31,7 +31,7 @@ public class CertificateDaoImpl implements CertificateDao {
 
     @Override
     public SqlRow queryGroupInfo(String token) {
-        return this.server.createSqlQuery("select t2.id,t2.name,env_id from certificate t1 LEFT JOIN service_group t2 on t1.service_group_id = t2.id where t1.content =:token").setParameter("token",token).findOne();
+        return this.server.createSqlQuery("select t2.id,t2.name,env_id from certificate t1 LEFT OUTER JOIN service_group t2 on t1.service_group_id = t2.id where t1.content =:token").setParameter("token",token).findOne();
     }
 
     @Override

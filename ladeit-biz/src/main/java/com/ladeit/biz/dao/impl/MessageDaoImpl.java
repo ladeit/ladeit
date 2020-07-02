@@ -33,7 +33,7 @@ public class MessageDaoImpl implements MessageDao {
     @Override
     public List<SqlRow> queryMessageSqlrowPagerList(String userId, int currentPage, int pageSize, String readFlag,String serviceGroupId,String type ,String level) {
         StringBuffer sbf = new StringBuffer();
-        sbf.append("select * from (select t1.*,t2.id messagestateid,t2.user_id,t2.read_flag,t3.username,t4.name servicename,t5.name servicegroupname from message t1 INNER JOIN message_state t2 on t1.id = t2.message_id LEFT JOIN user t3 on t1.operuser_id = t3.id  LEFT JOIN service t4 on t1.service_id = t4.id  LEFT JOIN service_group t5 on t1.service_group_id = t5.id  where t2.user_id =:userId ");
+        sbf.append("select * from (select t1.*,t2.id messagestateid,t2.user_id,t2.read_flag,t3.username,t4.name servicename,t5.name servicegroupname from message t1 INNER JOIN message_state t2 on t1.id = t2.message_id LEFT OUTER JOIN user t3 on t1.operuser_id = t3.id  LEFT OUTER JOIN service t4 on t1.service_id = t4.id  LEFT OUTER JOIN service_group t5 on t1.service_group_id = t5.id  where t2.user_id =:userId ");
         if(!(readFlag==null || readFlag.trim().length()==0)){
             if("true".equals(readFlag)){
                 sbf.append(" and t2.read_flag = 1 ");
@@ -111,6 +111,6 @@ public class MessageDaoImpl implements MessageDao {
 
     @Override
     public List<SqlRow> queryMessageByServiceId(String serviceId,String userId) {
-        return this.server.createSqlQuery("select t1.* from (select * from message where service_id =:serviceId and message_type = '2' ) t1 INNER JOIN (select * from message_state  where user_id =:userId and read_flag = 0 ) t2 on t1.id = t2.message_id   where 1=1 order by create_at desc limit 3").setParameter("userId",userId).setParameter("serviceId",serviceId).findList();
+        return this.server.createSqlQuery("select t1.* from (select * from message where service_id =:serviceId and message_type = '2' ) t1 INNER JOIN (select * from message_state  where user_id =:userId and read_flag = 0 ) t2 on t1.id = t2.message_id order by create_at desc limit 3").setParameter("userId",userId).setParameter("serviceId",serviceId).findList();
     }
 }

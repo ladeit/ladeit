@@ -107,7 +107,7 @@ public class ClusterDaoImpl implements ClusterDao {
 		StringBuffer sbf = new StringBuffer();
 		int start = (currentPage-1)*pageSize;
 		int end = pageSize;
-		sbf.append("select t1.* from (select t1.*,t2.k8s_name clustername,t2.create_at clustercreateat,t2.create_by createby from (select * from env where isdel = 0 ) t1 RIGHT JOIN (select * from cluster where isdel=0) t2 on t1.cluster_id = t2.id where 1=1 ");
+		sbf.append("select t1.* from (select t1.*,t2.k8s_name clustername,t2.create_at clustercreateat,t2.create_by createby from (select * from cluster where isdel=0) t2 LEFT OUTER JOIN (select * from env where isdel = 0 ) t1 on t1.cluster_id = t2.id ");
 		if(orderparam==null || orderparam.trim().length()==0){
 			sbf.append("order by t2.k8s_name asc,t1.namespace asc,t1.env_tag asc ,t1.create_by asc,t1.create_at desc) t1 limit :start,:end ");
 		}else if("namespaceasc".equals(orderparam)){
@@ -134,7 +134,7 @@ public class ClusterDaoImpl implements ClusterDao {
 	@Override
 	public int getclusterCountSqlrow() {
 		StringBuffer sbf = new StringBuffer();
-		sbf.append("select t1.* from (select t1.*,t2.k8s_name clustername,t2.create_at clustercreateat from (select * from env where isdel = 0 ) t1 RIGHT JOIN (select * from cluster where isdel=0) t2 on t1.cluster_id = t2.id where 1=1 order by t2.k8s_name asc,t1.namespace asc,t2.create_at desc) t1 ");
+		sbf.append("select t1.* from (select t1.*,t2.k8s_name clustername,t2.create_at clustercreateat from (select * from cluster where isdel=0) t2 LEFT OUTER JOIN (select * from env where isdel = 0 ) t1 on t1.cluster_id = t2.id where 1=1 order by t2.k8s_name asc,t1.namespace asc,t2.create_at desc) t1 ");
 		List<SqlRow> list = server.createSqlQuery(sbf.toString()).findList();
 		return list.size();
 	}

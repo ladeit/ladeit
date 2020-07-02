@@ -40,10 +40,12 @@ public class App {
 		//Boolean reflag = redisConfiguration.startService();
 
 		Map properties = System.getenv();
+		/*
 		if(properties.get("LADEIT_MYSQL_HOST")==null){
 			MysqlConfig mysqlConfig = new MysqlConfig();
 			mysqlConfig.startMysql();
 		}
+		*/
 
 		if(properties.get("LADEIT_REDIS_HOST")==null){
 			RedisConfig redisConfig = new RedisConfig();
