@@ -53,11 +53,14 @@ jobs:
               export IMAGE_NAME=ladeit/ladeit:$RELEASE_VERSION
 
               echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-              docker build -t $IMAGE_NAME .
-              docker push $IMAGE_NAME
+              # docker build -t $IMAGE_NAME .
+              # docker push $IMAGE_NAME
 
-              docker tag $IMAGE_NAME ladeit/ladeit:latest
-              docker push ladeit/ladeit:latest
+              # docker tag $IMAGE_NAME ladeit/ladeit:latest
+              # docker push ladeit/ladeit:latest
+
+              docker build -t $IMAGE_NAME -t ladeit/ladeit:latest .
+              docker push ladeit/ladeit
 
               # mvn install jib:build \
               #   -Djib.from.image=openjdk:8 \
