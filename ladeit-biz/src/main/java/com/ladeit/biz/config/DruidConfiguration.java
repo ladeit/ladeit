@@ -60,6 +60,9 @@ public class DruidConfiguration {
     public DataSource druidDataSource() {
         DruidDataSource datasource = new DruidDataSource();
 
+        String userHome = System.getProperty("user.home");
+        
+        dbUrl = dbUrl.replace("USER_HOME", userHome);
         datasource.setUrl(dbUrl);
         datasource.setDbType("sqlite");
         datasource.setUsername(username);
