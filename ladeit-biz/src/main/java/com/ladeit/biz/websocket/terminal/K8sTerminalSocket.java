@@ -28,6 +28,7 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -107,12 +108,9 @@ public class K8sTerminalSocket {
                     commands. toArray(new String[commands.size()]), container, true, true);
             byte [] b = new byte[1024];
             ptemp.getInputStream().read(b);
-            String shells = new String(b);
-            log.info("*******************   shell   *******************");
-            log.info(shells);
-
-
-            process = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"/bin/bash"} :
+            String [] shell = new String(b).split("\n");
+            String command = Arrays.stream(shell).filter(s ->"/bin/bash".equals(s)).findAny().isPresent()?"/bin/bash":"/bin/sh";
+            process = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{command} :
                     commands. toArray(new String[commands.size()]), container, true, true, poolid);
             // 开启线程接受数据并发送到前台
             this.singleThreadPool = new ThreadPoolExecutor(20, 20,
