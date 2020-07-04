@@ -101,13 +101,17 @@ public class K8sTerminalSocket {
         Exec exec = new Exec(apiClient);
 
         try {
-            Process ptemp = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"cat","/etc/shells"} :
+
+			io.kubernetes.client.Exec exec2 = new io.kubernetes.client.Exec(apiClient);
+            Process ptemp = exec2.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"cat","/etc/shells"} :
                     commands. toArray(new String[commands.size()]), container, true, true);
             byte [] b = new byte[1024];
             ptemp.getInputStream().read(b);
             String shells = new String(b);
             log.info("*******************   shell   *******************");
             log.info(shells);
+
+
             process = exec.exec(env.getNamespace(), pod, commands.isEmpty() ? new String[]{"/bin/bash"} :
                     commands. toArray(new String[commands.size()]), container, true, true, poolid);
             // 开启线程接受数据并发送到前台
