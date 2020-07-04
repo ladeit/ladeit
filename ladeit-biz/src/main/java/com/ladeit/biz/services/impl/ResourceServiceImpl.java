@@ -1720,12 +1720,13 @@ public class ResourceServiceImpl implements ResourceService {
 			V1ObjectMeta resourceMeta = (V1ObjectMeta) resource.getClass().getMethod("getMetadata").invoke(resource);
 			String kind = resource.getClass().getMethod("getKind").invoke(resource).toString();
 			V1ObjectMeta podMeta = (V1ObjectMeta) template.getClass().getMethod("getMetadata").invoke(template);
+			String version = podMeta.getLabels().get("version");
 			DateTime dateTime =
 					(DateTime) resourceMeta.getClass().getMethod("getCreationTimestamp").invoke(resourceMeta);
 			// 封装返回对象并扔到List中
 			TypesResourceAO typesResourceAO = new TypesResourceAO();
 			typesResourceAO.setType(kind);
-			typesResourceAO.setName(resourceMeta.getName());
+			typesResourceAO.setName(resourceMeta.getName()+" (version:"+version+")");
 			typesResourceAO.setLabels(resourceMeta.getLabels());
 			typesResourceAO.setCreateAt(dateTime.toDate());
 			if ("DaemonSet".equals(kind)) {
