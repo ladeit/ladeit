@@ -23,7 +23,7 @@ management:
         include: "*"
 datasource:
   default:
-    url: jdbc:sqlite:USER_HOME/.ladeit/sqlite/ladeit.db
+    url: jdbc:sqlite:USER_HOME/.ladeit/sqlite/ladeit.db?date_string_format=yyyy-MM-dd HH:mm:ss
     driver: org.sqlite.JDBC
     minIdle: 5
     validationQuery: SELECT 1
