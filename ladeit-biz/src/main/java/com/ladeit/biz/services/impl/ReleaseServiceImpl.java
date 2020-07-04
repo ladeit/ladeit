@@ -663,7 +663,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 			request.put("memory", memrequest);
 			container.setResources(resourceRequirements);
 		}
-		meta.setName(name + "-" + image.getVersion());
+		meta.setName(name);
 		meta.setNamespace(env.getNamespace());
 		Map<String, String> serviceLabel = new HashMap<>();
 		serviceLabel.put("serviceId", serviceId);
