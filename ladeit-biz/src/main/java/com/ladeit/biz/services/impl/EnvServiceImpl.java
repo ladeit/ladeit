@@ -430,7 +430,7 @@ public class EnvServiceImpl implements EnvService {
 								String cpuStr = container.getUsage().getCpu();
 								String memStr = container.getUsage().getMemory();
 								String cpuUsedStr;
-								if (cpuStr.contains("n")) {
+								if (StringUtils.isNoneBlank(cpuStr) && cpuStr.contains("n")) {
 									cpuUsedStr = cpuStr.replace("n", "");
 									BigDecimal cpuUsedContainer = new BigDecimal(StringUtils.isNotBlank(cpuUsedStr) ?
 											cpuUsedStr : "0");
@@ -439,7 +439,7 @@ public class EnvServiceImpl implements EnvService {
 									cpuUsedSum = cpuUsedSum.add(cpuUsedContainer);
 								}
 								String memUsedStr;
-								if (memStr.contains("Ki")) {
+								if (StringUtils.isNoneBlank(memStr) && memStr.contains("Ki")) {
 									memUsedStr = memStr.replace("Ki", "");
 									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
 											memUsedStr : "0");
@@ -447,14 +447,14 @@ public class EnvServiceImpl implements EnvService {
 											memUsedContainer.divide(big1024, 3, RoundingMode.HALF_UP).divide(big1024,
 													3, RoundingMode.HALF_UP).multiply(big1000);
 									memUsedSum = memUsedSum.add(memUsedContainer);
-								} else if (memStr.contains("Mi")) {
+								} else if (StringUtils.isNoneBlank(memStr) && memStr.contains("Mi")) {
 									memUsedStr = memStr.replace("Mi", "");
 									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
 											memUsedStr : "0");
 									memUsedContainer =
 											memUsedContainer.divide(big1024, 3, RoundingMode.HALF_UP).multiply(big1000);
 									memUsedSum = memUsedSum.add(memUsedContainer);
-								} else if (memStr.contains("Gi")) {
+								} else if (StringUtils.isNoneBlank(memStr) && memStr.contains("Gi")) {
 									memUsedStr = memStr.replace("Gi", "");
 									BigDecimal memUsedContainer = new BigDecimal(StringUtils.isNotBlank(memUsedStr) ?
 											memUsedStr : "0");
