@@ -438,7 +438,7 @@ public class ServiceGroupServiceImpl implements ServiceGroupService {
 					// queryServiceAO.setRelease(releaseAO);
 					if ("-1".equals(service.getStatus())) {
 						VirtualService virtualService = this.istioManager.getVirtualservice(cluster.getK8sKubeconfig(),
-								"virtual`service-" + service.getName(), env.getNamespace());
+								"virtualservice-" + service.getName(), env.getNamespace());
 						if (virtualService != null) {
 							queryServiceAO.setGateway(virtualService.getSpec().getGateways());
 							List<List<List<StringMatch>>> stringMatchLists = new ArrayList<>();
